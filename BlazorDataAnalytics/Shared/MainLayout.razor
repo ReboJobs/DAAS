@@ -1,0 +1,832 @@
+﻿@inherits LayoutComponentBase
+@using Blazored.Toast
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.SplitButtons
+@using BlazorDataAnalytics.Data
+@using Microsoft.Identity.Client
+@using Microsoft.PowerBI.Api
+@using Microsoft.PowerBI.Api.Models
+@using Microsoft.Rest
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using BlazorDataAnalytics.Services.UserThemeSettingService
+@using BlazorDataAnalytics.Services.ReportDashboardService
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.WebAssembly.Authentication
+@using Newtonsoft.Json
+@using System.IdentityModel.Tokens.Jwt
+@using Microsoft.AspNetCore.WebUtilities 
+
+@inject NavigationManager UriHelper
+@inject IJSRuntime jsRuntime
+@inject IJSRuntime JSRuntime
+@inject IConfiguration _configuration
+@inject IUserThemeSettingService _userThemeSettingService
+@inject IUserSecurityService _userSecurityService
+@inject IReportDashboardService _reportDashboardService
+@inject BlazorDataAnalytics.Data.FilterState filterstate;
+@inject IUserThemeSettingService _userThemeSettingService
+@inject NavigationManager uriHelper
+@inject NavigationManager UrlHelper; 
+
+
+
+<PageTitle>QTX DAaaS</PageTitle>
+        <BlazoredToasts Position="Blazored.Toast.Configuration.ToastPosition.TopRight"
+				IconType="IconType.Material"
+				SuccessClass="success-toast-override"
+                			Timeout="7"/>
+<div class="container" style="@backgroundBody;height: 1300px;max-width: 100%;">
+    <main>
+       <div class="row">
+             <header>
+                <div class="leftPane col-lg-10"></div>
+                 
+                @if (UISwitcher) 
+                { 
+                    <img class="iconVisible col-lg-2" src="/up-arrow.png" @onclick="() => UISwitcher = !UISwitcher"/> 
+                }
+                else
+                {
+                    <img class="iconVisible col-lg-2" src="images/menu.png" @onclick="() => UISwitcher = !UISwitcher"/> 
+                }
+            </header>
+        </div>
+        <div class="row">
+
+                 <nav class="navbar navbar-expand-md sticky-top" style="background:@userTheme.NavigationColorHex;margin-bottom: 5px;">
+                    <div class="col-lg-2" style="text-align: center;" >
+                        <a href="/">
+@*                            <img src="/salvos.png" class="ml-1 navbar-brand logo">*@
+                            <img src="@logo" class="ml-1 navbar-brand logo">
+                        </a>
+                    </div>
+                     <div class="col-lg-8">
+                        
+                    </div>
+                   
+                    <div class="col-md-1" style="text-align:right">
+                        @if(UriHelper.Uri.Contains("report"))
+                            {
+
+                             <SfIcon Name="IconName.Settings"  @onclick="ShowHideSidebarClick" style="cursor:pointer;"></SfIcon>                          
+                            }
+
+
+                    </div>
+                    <div class="col-md-1" style="text-align: right; padding-right: 5px">
+                      
+                        <SfDropDownButton IconCss="e-icons e-user">
+                             <DropDownButtonEvents ItemSelected="ItemSelected">
+                             </DropDownButtonEvents>
+                            <DropDownMenuItems>
+                                <DropDownMenuItem Text="Submit an idea"></DropDownMenuItem>
+                                <DropDownMenuItem Text="Report a bug"></DropDownMenuItem>
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Look and Feel"></DropDownMenuItem>
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Users"></DropDownMenuItem>  
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Groups"></DropDownMenuItem>  
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Data Sources"></DropDownMenuItem>
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Datasets"></DropDownMenuItem>  
+                                <DropDownMenuItem hidden="@{ !isAdmin }" Text="Logs"></DropDownMenuItem>  
+
+                                <DropDownMenuItem Text="Logout" Url="MicrosoftIdentity/Account/SignOut"></DropDownMenuItem>
+                            </DropDownMenuItems>
+                        </SfDropDownButton>
+                        @*<Login></Login>*@
+                    </div>
+                </nav>
+
+
+        </div>
+        <div id="main-content container-fluid col-md-12">
+            <div class="title default" style="text-align: center">@Body</div>
+        </div>
+      @if (showModalUserSettings)
+        {
+            <div class="modal fade show" id="myModal" style="display:block; z-index:999999 !important; width:100vw;height:80vh;" aria-modal="true" role="dialog">
+                <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close btn-close" aria-label="Close" @onclick="ModalCancel">
+                              <span aria-hidden="true" >&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-md-5">
+                                  <div >
+                                   <p class="theme-title">User Logo</p>
+                                    <div>
+                                       <SfUploader ID="UploadLogo" AllowedExtensions=".png, .jpg, .jpeg, .img" AutoUpload="false">
+                                           <UploaderAsyncSettings SaveUrl="api/File/UploadUserHeaderLogo"></UploaderAsyncSettings>
+                                       </SfUploader>
+                                    </div>
+                                </div>
+                                <div >
+                                   <p class="theme-title">Body Background Image</p>
+                                    <div >
+                                        <SfCheckBox Label="Use Background Image" @bind-Checked="userTheme.IsBackgroundImage"></SfCheckBox>
+                                         <SfUploader  ID="BackgroundImage" AllowedExtensions=".png, .jpg, .jpeg, .img"  AutoUpload="false">
+                                            <UploaderAsyncSettings SaveUrl="api/File/UploadUserBackgroundImage"></UploaderAsyncSettings>
+                                         </SfUploader>
+                                    </div>
+                                </div>
+                            </div>
+                              <div class="col-md-7">
+               
+                                <div>
+                                    <p class="theme-title">Body</p>
+                                    <div class="theme-body">
+                     
+                                        <span class="theme-label">Background</span>
+                                        <SfColorPicker ID="BodyBackground"  @bind-Value="userTheme.BackgroundColorHex" ></SfColorPicker>
+                                           <span class="theme-label">Color</span>
+                                        <SfColorPicker ID="BodyFontColor" @bind-Value="userTheme.BackgroundFontColorHex"></SfColorPicker>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="theme-title">Nav Bar</p>
+                                    <div class="theme-body">
+                                        <span class="theme-label">Background</span>
+                                          <SfColorPicker ID="NavBar" @bind-Value="userTheme.NavigationColorHex"></SfColorPicker>
+                                           <span class="theme-label">Color</span>
+                                       <SfColorPicker ID="FontColorNavBar" @bind-Value="userTheme.NavigationFontColorHex"></SfColorPicker>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="theme-title">Dashboard</p>
+                                    <div class="theme-body">
+                                        <span class="theme-label">Background</span>
+                                          <SfColorPicker ID="Dashboard" @bind-Value="userTheme.DashboardColorHex"></SfColorPicker>
+                                           <span class="theme-label">Color</span>
+                                           <SfColorPicker ID="FontColorDashboard" @bind-Value="userTheme.DashboardFontColorHex"></SfColorPicker>
+                                    </div>
+                                </div>
+                                <div>
+                                    <p class="theme-title">Switch Themes</p>
+                                    <div class="theme-body">
+                                             <div class="theme-switcher" style="width: 200px;float: right;"> 
+                                                @*Theme switcher*@ 
+                                                <SfDropDownList TItem="ThemeDetails" TValue="string" @bind-Value="userTheme.SwitchTheme" DataSource="@Themes"> 
+                                                    <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings> 
+                                                    <DropDownListEvents TItem="ThemeDetails" TValue="string" ></DropDownListEvents> 
+                                                </SfDropDownList> 
+                                            </div> 
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                   
+                        </div>
+                        <div class="modal-footer">
+                                  <SfButton CssClass="e-medium" OnClick="Submit">Apply</SfButton>
+                                  <SfButton CssClass="e-medium" OnClick="Reset">Reset</SfButton>
+                        </div>
+                </div>
+                </div>
+            </div>
+        }
+    </main>
+</div>
+
+@code {
+    [CascadingParameter]
+    private string isDevice { get; set; }
+    private bool mobile { get; set; }
+    private bool isAdmin { get; set; }
+    private string currentUrl;
+    private bool isQualiticks { get; set; } = false;
+    private bool showModalUserSettings{ get; set; } = false;
+    private string x;
+    UserSettingsDialog UserSettingsDialog;
+
+    bool UISwitcher;
+    string Display => UISwitcher == true ? "block" : "none";
+    private string userName { get; set; } = string.Empty;
+    string height;
+    bool isShowFilter = false;
+    bool filter = true;
+    bool isShowSideBar = false;
+
+    void ShowHideItemClick()
+    {
+        filter = !filter;
+        filterstate.SetFilter(filter);
+    }
+    void ShowHideSidebarClick()
+    {
+        isShowSideBar = !isShowSideBar;
+        filterstate.SetFilter(isShowSideBar);
+    }
+
+    SfSidebar sidebarObj;
+    public bool SidebarToggle = false;
+    public void Toggle()
+    {
+        SidebarToggle = !SidebarToggle;
+    }
+
+    private ElementReference PowerBIElement;
+    private IList<Group>? _group;
+    private Reports _report;
+    public IList<Report>? _reports = new List<Report>();
+    private PowerBIClient _client;
+    private Guid _workspaceId, _reportId;
+    private PowerBIEmbedConfig _result;
+    string buttonColor = string.Empty;
+    string logo = string.Empty;
+    string backgroundBody = string.Empty;
+
+    private UserThemeSettingModel userTheme { get; set; } = new UserThemeSettingModel() ;
+
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+    private string themeName; 
+    private List<ThemeDetails> Themes = new List<ThemeDetails>() { 
+        new ThemeDetails(){ ID = "material", Text = "Material" }, 
+        new ThemeDetails(){ ID = "bootstrap", Text = "Bootstrap" }, 
+        new ThemeDetails(){ ID = "fabric", Text = "Fabric" }, 
+        new ThemeDetails(){ ID = "bootstrap4", Text = "Bootstrap 4" }, 
+    }; 
+    public class ThemeDetails 
+    { 
+        public string ID { get; set; } 
+        public string Text { get; set; } 
+    }
+
+    private  string CustomerTenantSid = "";
+
+    public async Task GetCustomerTenantSid()
+    {
+        string resource = "https://management.azure.com";
+
+        var clientId = _configuration.GetSection("AzureAd:ClientId").Value;
+        var secret = _configuration.GetSection("AzureAd:ClientSecret").Value;
+        var oauthUrl = _configuration.GetSection("AzureAd:Instance").Value + _configuration.GetSection("workSpaceId").Value + "/oauth2/token";
+        var content = new FormUrlEncodedContent(new Dictionary <string, string> {
+                                      { "client_id", clientId},
+                                      { "client_secret", secret},
+                                      { "grant_type", "client_credentials" },
+                                      { "resource", resource},
+                                      { "scope", "user_impersonation"}
+                                    });
+
+        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(oauthUrl))
+                            {
+                                Content = content
+                            };
+
+        var _httpClient = new HttpClient();
+        using (var response = await _httpClient.SendAsync(httpRequestMessage))
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                var responseStream = await response.Content.ReadAsStringAsync();
+
+                AnalyticsTokenModel analyticsToken = JsonConvert.DeserializeObject<AnalyticsTokenModel>(responseStream);
+
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(analyticsToken.access_token);
+                var tokenS = jsonToken as JwtSecurityToken;
+
+                if (tokenS.Claims.First(claim => claim.Type == "groups") != null)
+                {
+                    CustomerTenantSid =  tokenS.Claims.First(claim => claim.Type == "groups").Value;
+                } var x =  tokenS.Claims.First(claim => claim.Type == "groups").Value;
+
+            }
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        isShowFilter = UriHelper.Uri.Contains("report");
+        filterstate.IsShowHideFilter = isShowFilter ? false : true;
+        filterstate.curUrl += currentUrl;
+        currentUrl = UriHelper.ToBaseRelativePath(UriHelper.BaseUri);
+        AuthenticationResult authenticationResult = null;
+        authenticationResult = await DoAuthentication();
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+        var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+        //check if user is admin
+        isAdmin = userNameGroupRolesModel.IsAdmin;
+        isQualiticks = isAdmin && user.Identity.Name.Contains("qualiticks.com");
+        if(userNameGroupRolesModel.WorkspaceId == Guid.Empty)
+        {
+            return;
+        }
+        await GetCustomerTenantSid();
+        var reportInDashboards = await _reportDashboardService.GetReportsInDashboardByTenantId(userNameGroupRolesModel.CustomerTenantId,this.CustomerTenantSid);
+
+        userName = user?.Identity?.Name ?? string.Empty;
+        userTheme =  _userThemeSettingService.GetUserThemeSettings(userName) ?? new UserThemeSettingModel();
+        buttonColor = $"color:{userTheme.NavigationFontColorHex}";
+
+        _result = new PowerBIEmbedConfig();
+        _reports = new List<Report>();
+        _client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+        var groups = await _client.Groups.GetGroupsAsync();
+
+        _group = groups.Value;
+        _workspaceId = userNameGroupRolesModel.WorkspaceId;
+        _report = await _client.Reports.GetReportsInGroupAsync(_workspaceId);
+
+        if(userNameGroupRolesModel.IsAdmin)
+        {
+            _reports = _report.Value;
+        }
+        else
+        {
+            if(reportInDashboards != null)
+            {
+                _reports = _report.Value.Where(r => userNameGroupRolesModel.CustomerUserRoles.Any(a => a.Code == 
+                                                        reportInDashboards?.FirstOrDefault(x => x.ReportPowerBiId == r.Id)?.UserRoleCode)).ToList();           
+            }
+
+        }
+
+        if(string.IsNullOrEmpty(userTheme.HeaderImageLogoUrl))
+        {
+
+            logo = "https://www.computerhope.com/tips/images/igoogle-homepage.jpg";
+        }
+        else
+        {
+            logo = userTheme.HeaderImageLogoUrl; 
+        }
+
+        if(userTheme.IsBackgroundImage == false || userTheme.IsBackgroundImage == null)
+        {
+
+            backgroundBody = $"background:{userTheme.BackgroundColorHex};color:{userTheme.BackgroundFontColorHex}";
+        }
+        else
+        {
+            backgroundBody = $"background-image:url('{userTheme.BackgroundImageLogoUrl}');background-repeat: no-repeat;background-position: center;background-size: cover;"; 
+        }
+        await GetUserThemeSetting();
+        var theme = GetThemeName(); 
+        themeName = theme.Contains("bootstrap4") ? "bootstrap4" : theme; 
+        filterstate.SetFilter(filter);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //if (firstRender)
+        //{
+        //    mobile = await jsRuntime.InvokeAsync<bool>("isDevice");
+        //    isDevice = mobile ? "Mobile" : "Desktop";
+
+        //    if (isDevice == "Mobile")
+        //    {
+        //        height = "60px";
+        //    }
+        //    else
+        //    {
+        //        height = "1px"; 
+        //    }
+        //}
+        currentUrl = UriHelper.ToBaseRelativePath(UriHelper.BaseUri);
+        filterstate.curUrl = null;
+    }
+    private const string AuthorityFormat = "https://login.microsoftonline.com/94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0/v2.0";
+    private const string MSGraphScope = "https://analysis.windows.net/powerbi/api/.default";
+    private async Task<AuthenticationResult> DoAuthentication()
+    {
+        try
+        {
+            IConfidentialClientApplication daemonClient;
+            daemonClient = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+                .WithAuthority(string.Format(AuthorityFormat, "common"))
+                .WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+                .Build();
+
+            AuthenticationResult authResult = await daemonClient.AcquireTokenForClient(new[] { MSGraphScope }).ExecuteAsync();
+            return authResult;
+        }
+        catch (Exception ex)
+        {
+            throw ex;
+        }
+    }
+
+    private async Task ReportChangeHandler(ChangeEventArgs<Guid, Report> args)
+    {
+        _reportId = args.ItemData.Id;
+
+        var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "view");
+        var tokenResponse = _client.Reports.GenerateTokenAsync(new Guid(_workspaceId.ToString()), new Guid(_reportId.ToString()), generateTokenRequestParameters).Result;
+
+        _result.EmbedToken = tokenResponse;
+        _result.EmbedUrl = args.ItemData.EmbedUrl;
+        _result.Id = args.ItemData.Id.ToString();
+        await Interop.CreateReport(JSRuntime, PowerBIElement, tokenResponse.Token, args.ItemData.EmbedUrl, args.ItemData.Id.ToString());
+    }
+    private async Task UserSettings()
+    {
+
+        ModalShow();
+    }
+    private async Task GoToReport(Report report,string editable = "false",string isdashboard="false")
+    {
+        currentUrl = editable;
+        UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{report.Id}/{editable}/{isdashboard}");
+    }
+
+    private async Task ItemSelected(MenuEventArgs args)
+    {
+        string itemText =  args.Item.Text.ToUpper();
+        if(itemText == "REPORT A BUG")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/reportbugs/");
+        }
+
+        if(itemText == "SUBMIT AN IDEA")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/submitidea/");
+        }
+
+        if(itemText == "LOOK AND FEEL")
+        {
+            currentUrl = itemText;
+            await this.UserSettings();
+        }
+
+        if(itemText == "DATA SOURCES")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/datasources/");
+        }
+
+        if(itemText == "USERS")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/users/");
+        }
+
+        if(itemText == "GROUPS")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/groups/");
+        }
+        if (itemText == "DATASETS")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/datasets/");
+
+        }
+        if (itemText == "LOGS")
+        {
+            currentUrl = itemText;
+            UriHelper.NavigateTo($"/logs/");
+
+        }
+        if(itemText == "LOGOUT")
+        {
+
+        }
+
+
+    }
+    private string GetThemeName() 
+    { 
+        var uri = UrlHelper.ToAbsoluteUri(UrlHelper.Uri); 
+        QueryHelpers.ParseQuery(uri.Query).TryGetValue("theme", out var theme); 
+        theme = theme.Count > 0 ? theme.First() : "bootstrap4"; 
+        return theme; 
+    } 
+ 
+    /// <summary> 
+    /// Returns the new Uri to navigate with theme changes. 
+    /// </summary> 
+    private string GetUri(string themeName) 
+    { 
+        var uri = UrlHelper.ToAbsoluteUri(UrlHelper.Uri); 
+        return uri.AbsolutePath + "?theme=" + themeName; 
+    } 
+        private async Task GetUserThemeSetting()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userName = user?.Identity?.Name ?? string.Empty;
+        userTheme =  _userThemeSettingService.GetUserThemeSettings(userName) ?? new UserThemeSettingModel();
+    }
+
+    private async Task Submit()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userTheme.UserName = userName;
+        userTheme = await _userThemeSettingService.UpsertUserThemeAsync(userTheme);
+
+       ModalOk();
+        var timer = new Timer(new TimerCallback(_ => { uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true); }), null, 100, 100);
+     
+    }
+
+   private async Task Reset()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userTheme.UserName = userName;
+        userName = user?.Identity?.Name ?? string.Empty;
+
+        userTheme = await _userThemeSettingService.ResetUserThemes(userName);
+
+      ModalOk();
+        var timer = new Timer(new TimerCallback(_ => { uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true); }), null, 100, 100);
+     
+    }
+   void ModalShow() => showModalUserSettings = true;
+   void ModalCancel() => showModalUserSettings = false;
+    void ModalOk()
+    {
+        Console.WriteLine("Modal ok");
+        showModalUserSettings = false;
+    }
+}
+
+<style>
+    .logo {
+        /*        width: 160px;*/
+        height: 50px;
+    }
+
+    .e-btn:hover {
+        background-color: lightgray;
+    }
+
+      .e-custom {
+            white-space: normal;
+            background-color: transparent;
+            color: gray;
+            border: none;
+            font-size: 12pt;
+            margin: 2px;
+            box-shadow: -1px -1px 5px 0 rgb(0 0 0 / 4%), 1px 1px 12px 0 rgb(0 0 0 / 16%);
+        }
+        .e-dropdown-popup {
+            background-color: #545b62 !important;
+            color: #fff !important;
+            margin-top: 20px !important;
+            border-radius: 5px !important;
+            }
+        .e-dropdown-menu::before
+        {
+            content: "";
+            background: transparent;
+            top: -5%;
+            left: 80%;
+            border-left: 10px solid transparent;
+            border-right: 10px solid transparent;
+            position: absolute;
+            border-bottom: 20px solid #545b62;
+        }
+
+    .title {
+        font-size: 20px;
+    }
+
+    /* Sidebar styles */
+    .e-sidebar .e-icons::before {
+        font-size: 25px;
+    }
+
+    /* dockbar icon Style */
+    .e-sidebar .home::before {
+        content: '\e102';
+    }
+
+    .e-sidebar .profile::before {
+        content: '\e10c';
+    }
+
+    .e-sidebar .info::before {
+        content: '\e11b';
+    }
+
+    .e-sidebar .settings::before {
+        content: '\e10b';
+    }
+
+    .e-sidebar .expand::before,
+    .e-sidebar.e-right.e-open .expand::before {
+        content: '\e10f';
+    }
+
+    .e-sidebar.e-open .expand::before,
+    .e-sidebar.e-right .expand::before {
+        content: '\e10e';
+    }
+
+    /* end of dockbar icon Style */
+
+    .e-sidebar.e-dock.e-close span.e-text {
+        display: none;
+    }
+
+    .e-sidebar.e-dock.e-open span.e-text {
+        display: inline-block;
+    }
+
+    .e-sidebar li {
+        list-style-type: none;
+        cursor: pointer;
+    }
+
+    .e-sidebar ul {
+        padding: 0px;
+    }
+
+    .e-sidebar span.e-icons {
+        color: #c0c2c5;
+    }
+
+    .e-open .e-icons {
+        margin-right: 16px;
+    }
+
+    .e-open .e-text {
+        overflow: hidden;
+        font-size: 15px;
+    }
+
+    .sidebar-item {
+        text-align: center;
+        /*        border-bottom: 1px #e5e5e58a solid;*/
+    }
+
+    .e-sidebar.e-open .sidebar-item {
+        text-align: left;
+        padding-left: 10px;
+        color: #c0c2c5;
+    }
+
+    .e-sidebar {
+        background: #2d323e;
+        overflow: hidden;
+    }
+
+    /* end of sidebar styles */
+
+
+    @@font-face {
+        font-family: 'e-icons';
+        src: url(data:application/x-font-ttf;charset=utf-8;base64,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) format('truetype');
+        font-weight: normal;
+        font-style: normal;
+    }
+
+    .main > div {
+        padding: 0px !important;
+    }
+
+    body{
+        margin:0;
+        font-family:Arial, Arial, Helvetica, sans-serif;
+    }
+
+    header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+    }
+
+    header > #leftPane {
+        margin: 0 0 0 15px;
+    }
+
+    header > img {
+        margin: 0 20px 10px 0;
+        height:30px;
+    }
+
+    @@media not  screen and (max-width: 480px) {  
+        .iconVisible  {  
+              display: none  
+        }  
+    }
+    .e-user::before {
+        content: '\e714' !important;
+    }
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    } 
+    .theme-title
+    {
+        background: #f7f7f7;
+        padding: 5px;
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .theme-body
+    {
+        align-items: flex-end;
+        text-align: end;
+        margin-bottom: 10px;
+    }
+    .theme-label
+    {
+        color: #817e7e;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .btn-close
+    {
+        border: none;
+        background: none;
+        color: red;
+        text-transform: uppercase;
+        font-weight: 600;
+        font-size: 20px;
+    }
+    .e-colorpicker-wrapper .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color, .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color {
+    background-size: 8px;
+    border-radius: 50%;
+    height: 12px;
+    margin-top: 0;
+    position: relative;
+    width: 12px;
+    }
+   
+    .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color .e-split-preview {
+    border-radius: 50px !important;
+    }
+    .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn {
+    font-family: initial;
+    line-height: 1px;
+    padding: 1px 5px;
+    background-color: transparent;
+    border: 1px solid #f0f1f3;
+    }
+    .e-colorpicker-wrapper .e-btn.e-icon-btn, .e-colorpicker-container .e-btn.e-icon-btn {
+    background-color: #fff;
+    border: 1px solid #f0f1f3;
+    color: #6c757d;
+    }
+    .logo-text
+    {
+    width: 200px;
+    text-align: left;
+    padding: 5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    }
+    .e-upload .e-file-select-wrap .e-file-drop, .e-bigger.e-small .e-upload .e-file-select-wrap .e-file-drop {
+    font-family: inherit;
+    font-size: 14px;
+    margin-left: 12px;
+    display: none !important;
+    }
+    .e-upload {
+    border: 1px solid #f7f7f7;
+    border-top: none;
+    }
+    .e-upload .e-file-select-wrap, .e-bigger.e-small .e-upload .e-file-select-wrap {
+    padding-top: 10px !important;
+    padding-left: 10px;
+    }
+    .logo
+    {
+        align-items: flex-end;
+        text-align: start;
+        margin-bottom: 10px;
+    }
+    .btn-close:focus {
+    outline: 0;
+    box-shadow: none;
+    opacity: 1;
+    }
+    .theme-body .e-upload {
+    border:none;
+    }
+    .theme-body .e-file-select-wrap
+    {
+        padding:0px !important
+    }
+   .theme-body .e-upload .e-file-select-wrap .e-file-drop {
+    display: none !important;
+    }
+    .bg-image
+    {
+    display: flex;
+    text-align: center;
+    margin-bottom: -35px;
+    margin-left: 50px;
+    }
+.modal-dialog {
+    max-width: 75vw;
+    margin: 1.75rem auto;
+}
+</style> 
+
+
+
