@@ -1,0 +1,91 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportBugService
+@using Syncfusion.Blazor.Data
+
+@inject IReportBugService _reportBugService
+<SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Delete Reported Bug</Header>
+        <Content>
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" aria-label="Close" @onclick="CloseDialog">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                 Do you want to delete this Report Bug Id: <b>@reportBugId</b> ?
+            </div>
+            <div class="modal-footer">
+                    <SfButton CssClass="e-medium" OnClick="@(async (e) => await DeleteReportBugId())">Delete</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="CloseDialog">Close</SfButton>
+            </div>
+        </div>
+         </Content>
+    </DialogTemplates>
+</SfDialog>
+@code {
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int reportBugId { get; set; } = 0;
+    public bool IsVisible { get; set; } = false;
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    private void Cancel()
+    {
+        CloseDialog();
+        StateHasChanged();
+    }
+    public async Task OpenDialog(int id)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        this.reportBugId = id;
+        if(id > 0)
+        {
+            this.IsVisible = true;
+        }
+        this.StateHasChanged();
+    }
+
+    private async Task Close()
+    {
+              CloseDialog();
+        StateHasChanged();
+    }
+
+    private async Task DeleteReportBugId()
+    {
+
+        if(reportBugId > 0)
+        {
+            await _reportBugService.DeleteReportBugAsync(reportBugId);
+            this.refreshParent = true;
+            this.OnSubmitHandler();
+            CloseDialog();
+        }
+
+    }
+   private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+     public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+}

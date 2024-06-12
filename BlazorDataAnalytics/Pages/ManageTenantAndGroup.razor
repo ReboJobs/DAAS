@@ -1,0 +1,273 @@
+﻿@using Models
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Syncfusion.Blazor.Data
+@inject IUserSecurityService _userSecurityService
+
+@page "/groups"
+
+    
+    <PageTitle>Manage Tenant And Groups</PageTitle>
+<div class="row col-lg-8 filter-bar" >            
+    <div class="col-lg-12">
+        <h3 style="text-shadow: 1px 1px 5px white;text-align:center;">Groups</h3>
+    </div>
+</div>
+    <div class="col-lg-12 control-section" style="margin-top:1%;">
+        <div class="content-wrapper">
+            <div class="row">
+            <SfSpinner @bind-Visible="showSpinner">
+            </SfSpinner>
+                <div class="col-sm">
+                    <center>List of Users</center> 
+                    <div style="margin-bottom:1%;margin-top:1%">
+                            <SfButton CssClass="e-medium" hidden="@isNotQualiticks" OnClick="@(async (e) => await AddCustomerUserTenant())">Add Tenants</SfButton>&nbsp;
+                    </div>
+                    <SfGrid DataSource="@listCustomerTenant" Height="500" Width="100%">
+                        <GridEvents RowSelected="RowSelectHandler" TValue="CustomerTenantModel"></GridEvents>
+                        <GridColumns>
+                            <GridColumn Field=@nameof(CustomerTenantModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="20" Visible="false"></GridColumn>
+                            <GridColumn Field=@nameof(CustomerTenantModel.Name) HeaderText="Tenant Name" ShowInColumnChooser="false" Width="300"></GridColumn>
+                            <GridColumn Field=@nameof(CustomerTenantModel.IsActive) HeaderText="Active" Width="50" AllowEditing="false" DisplayAsCheckBox="true"></GridColumn>
+                            <GridColumn TextAlign="TextAlign.Center" Width="50"> 
+                                <Template> 
+                                    @{ 
+                                        var customerUserTenantModel = (context as CustomerTenantModel); 
+                                        <div class="image"> 
+                                            <SfButton IconCss="e-icons e-edit e-btn-icon" CssClass="e-btn-grd" @onclick="async (e) => await EditCustomerTenant(customerUserTenantModel)"></SfButton>         
+                                        </div> 
+                                    } 
+                                </Template> 
+                            </GridColumn> 
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+                <div class="col-sm">
+                     <center>List of User Groups</center>
+                     <div style="margin-bottom:1%;margin-top:1%">
+                            <SfButton CssClass="e-medium" OnClick="@(async (e) => await AddCustomerUserGroup())">Add Groups</SfButton>&nbsp;
+                    </div>
+                    <SfGrid DataSource="@listCustomerUserGroup" Height="500" Width="100%">
+                        <GridColumns>
+                            <GridColumn Field=@nameof(CustomerUserGroupModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="20" Visible="false"></GridColumn>
+                            <GridColumn Field=@nameof(CustomerUserGroupModel.CustomerTenantId) HeaderText="CustomerTenantId" Width="100" Visible="false"></GridColumn>
+                            <GridColumn Field=@nameof(CustomerUserGroupModel.GroupName) HeaderText="Group Name" ShowInColumnChooser="false" Width="300"></GridColumn>
+                            <GridColumn Field=@nameof(CustomerUserGroupModel.IsActive) HeaderText="Active" Width="50" AllowEditing="false" DisplayAsCheckBox="true"></GridColumn>
+                             @*<GridColumn Field=@nameof(CustomerUserGroupModel.CustomerTenantSID) HeaderText="CustomerTenantGroupSID" ShowInColumnChooser="false" Width="300"></GridColumn>*@
+                            <GridColumn TextAlign="TextAlign.Center" Width="50"> 
+                                <Template> 
+                                    @{ 
+                                        var customerUserGroupModel = (context as CustomerUserGroupModel); 
+                                        <div class="image"> 
+                                            <SfButton IconCss="e-icons e-edit e-btn-icon" CssClass="e-btn-grd" @onclick="async (e) => await EditCustomerGroup(customerUserGroupModel)"></SfButton> 
+                                        </div> 
+                                    } 
+                                </Template> 
+                            </GridColumn> 
+                        </GridColumns>
+                    </SfGrid>
+                </div>
+            </div>
+        </div>
+    </div>
+    <BlazorDataAnalytics.Dialogs.CustomerTenantDialog @ref="customerTenantDialog" RefreshPageEventCallBack="RefreshCustomerPage"/>
+    <BlazorDataAnalytics.Dialogs.CustomerGroupDialog @ref="customerGroupDialog" RefreshPageEventCallBack="RefreshCustomerPage"/>
+
+@code {
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    BlazorDataAnalytics.Dialogs.CustomerTenantDialog customerTenantDialog;
+    BlazorDataAnalytics.Dialogs.CustomerGroupDialog customerGroupDialog;
+    private int? customerTenantId { get; set; }
+    private int? customerUserGroupId { get; set; }
+    private bool showSpinner { get; set; } = false;
+    private bool isNotQualiticks { get; set; } = true;
+    private string userName { get; set; } = string.Empty;
+
+    private List<CustomerTenantModel> listCustomerTenant = new List<CustomerTenantModel>();
+    private List<CustomerUserGroupModel> listCustomerUserGroup = new List<CustomerUserGroupModel>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        listCustomerTenant = await _userSecurityService.GetAllCustomerTenantsByUserName(user.Identity.Name);
+        userName = user.Identity.Name;
+        listCustomerTenant= listCustomerTenant.OrderBy(x=> x.Name).ToList();
+        isNotQualiticks = !user.Identity.Name.ToLower().Contains("qualiticks");
+    }
+
+    private void CustomerTenantValueChange(ChangeEventArgs<int?, CustomerTenantModel> args)
+    {
+        showSpinner = true;
+        listCustomerUserGroup = _userSecurityService.GetCustomerGroupTenants(args.ItemData.Id).Result;
+        showSpinner = false;
+    }
+
+    public void RowSelectHandler(RowSelectEventArgs<CustomerTenantModel> args)
+    {
+        showSpinner = true;
+        if(args.Data != null)
+        {
+            customerTenantId = args.Data.Id;
+            listCustomerUserGroup = _userSecurityService.GetCustomerGroupTenants(args.Data.Id).Result;
+        }
+
+        showSpinner = false;
+    }
+
+    private async Task AddCustomerUserTenant()
+    {
+        await  customerTenantDialog.OpenDialog(0, "", string.Empty, true);
+    }
+
+    private async Task EditCustomerTenant(CustomerTenantModel customerTenantModel)
+    {
+        await  customerTenantDialog.OpenDialog(customerTenantId??0,customerTenantModel.WorkspaceId.ToString(),customerTenantModel.Name,  customerTenantModel.IsActive??false);
+
+    }
+
+
+    private async Task AddCustomerUserGroup()
+    {
+       await  customerGroupDialog.OpenDialog(0,0,string.Empty,true, false, string.Empty);
+    }
+
+
+
+    private async Task EditCustomerGroup(CustomerUserGroupModel customerUserGroupModel)
+    {
+      await  customerGroupDialog.OpenDialog( customerUserGroupModel.Id,customerUserGroupModel.CustomerTenantId??0,customerUserGroupModel.GroupName,customerUserGroupModel.IsActive??false, customerUserGroupModel.ViewAllReport??false, customerUserGroupModel.CustomerTenantSID);
+    }
+    private void RefreshCustomerPage(bool refreshParentPage)
+    {
+        if(refreshParentPage)
+        {
+          this.refreshTenants().ConfigureAwait(true);;
+            StateHasChanged();
+        }
+    }
+   private async Task refreshTenants()
+    {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            listCustomerTenant = await _userSecurityService.GetAllCustomerTenantsByUserName(user.Identity.Name);
+            userName = user.Identity.Name;
+            listCustomerTenant= listCustomerTenant.OrderBy(x=> x.Name).ToList();
+            isNotQualiticks = !user.Identity.Name.ToLower().Contains("qualiticks");
+
+             if(customerTenantId > 0){
+            listCustomerUserGroup = _userSecurityService.GetCustomerGroupTenants(customerTenantId??0).Result;
+             }
+        
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+}
+<style> 
+
+    .e-btn-grd{
+        background-color: transparent !important;
+    }
+       @@media (min-width:320px)  {     
+    .filter-bar {
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:481px)  {    
+    .filter-bar {
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:641px)  {   
+     .filter-bar {
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+@@media (min-width:961px)  {   
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1025px) {    
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1281px) {   
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+
+</style> 

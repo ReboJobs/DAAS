@@ -1,0 +1,255 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportBugService
+@using Microsoft.WindowsAzure.Storage
+@using Microsoft.WindowsAzure.Storage.Blob
+@using Syncfusion.Blazor.Data
+@using BlazorDataAnalytics.Services.BlobStorageService;
+
+@inject IReportBugService _reportBugService
+@inject IBlobStorageService _blobStorageService;
+<style> 
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    }
+    .modal-rte .e-rte-content {
+    border: none !important;
+    height: 400px !important;
+    overflow: auto;
+    }
+    .modal-rte .e-richtexteditor {
+    color: #333;
+    display: block;
+    position: relative;
+    border: 1px solid #e3e1e1 !important;
+    }
+    .modal-rte .e-upload-actions
+    {
+        display:none;
+    }
+</style> 
+<SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Report a Bug</Header>
+        <Content>
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <EditForm id="frmReportBugId" Model="@reportBugModel" OnSubmit="Submit">
+                 <DataAnnotationsValidator />
+                <div class="modal-body">
+@*                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Id</label>
+                         <SfTextBox Placeholder="Id" Value="@(reportBugModel.Id.ToString())" Readonly=true> </SfTextBox>
+                    </div>*@
+                   <div class="form-group d-flex">
+                        <label class="col-2" for="name">Title</label>
+                         <SfTextBox ID="Title" Placeholder="Title" @bind-Value="reportBugModel.Title"></SfTextBox>
+                     </div>
+              @*      <div class="form-group">
+                         <SfTextBox CssClass="text-multiline" ID="Description" @bind-Value="reportBugModel.Description" Multiline=true FloatLabelType="@FloatLabelType.Auto" Placeholder="Description" ></SfTextBox>
+                     </div>*@
+                   <div class="form-group d-flex">
+                        <label class="col-2" for="name">Status</label>
+                         <SfDropDownList TValue="byte" TItem="ReportBugStatusModel" Placeholder="Select a status" DataSource="@ReportStatusData" @bind-Value="@reportBugStatus">
+                            <DropDownListFieldSettings Value="Id" Text="StatusName"></DropDownListFieldSettings>
+                         </SfDropDownList>
+                     </div>
+                     <div class="form-group modal-rte">
+                     <label class="col-2" for="name">Description</label>
+                       <SfRichTextEditor @ref="ideaModelObj" EnableHtmlEncode="true" @bind-Value="@reportBugModel.Description" >
+                            <ChildContent>
+                                <RichTextEditorToolbarSettings Items="@Tools" Enable="false"></RichTextEditorToolbarSettings>
+                                <RichTextEditorImageSettings SaveFormat="SaveFormat.Base64"></RichTextEditorImageSettings>
+                            </ChildContent>
+                        </SfRichTextEditor>
+                        <SfUploader @ref="UploadObj" ID="UploadFiles" AllowedExtensions=".doc, .docx, .pdf, .png, .jpeg, .jpg" AutoUpload="false"> 
+                                <UploaderEvents ValueChange="OnChangeUpload"></UploaderEvents> 
+                        </SfUploader> 
+                     </div>
+                </div>
+             </EditForm>
+            <div class="modal-footer">
+                    <SfButton CssClass="e-medium" HtmlAttributes="@(new() { { "form", "frmReportBugId" } })">Submit</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="Cancel">Close</SfButton>
+            </div>
+        </div>
+         </Content>
+    </DialogTemplates>
+</SfDialog>
+@code {
+
+    SfRichTextEditor ideaModelObj;
+    SfUploader UploadObj; 
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Image },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo }
+    };
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int reportBugId { get; set; } = 0;
+
+    [Parameter]
+    public string imagedesc { get; set; }
+
+    [Parameter]
+    public string title { get; set; }
+
+    [Parameter]
+    public string description { get; set; }
+
+    private ReportBugModel reportBugModel { get; set; } = new ReportBugModel();
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+    [Parameter]
+    public byte reportBugStatus { get; set; } = (byte)EnumReportBugStatus.Open;
+    public bool IsVisible { get; set; } = false;
+    List<ReportBugStatusModel> ReportStatusData =  Enum.GetValues(typeof(EnumReportBugStatus))
+                        .Cast<EnumReportBugStatus>()
+                        .Select(v => new ReportBugStatusModel { Id = (byte)v, StatusName = v.GetDescription() })
+                        .ToList();
+
+
+    private void Cancel()
+    {
+          CloseDialog();
+        StateHasChanged();
+    }
+
+    private async Task Close()
+    {
+        CloseDialog();
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        //if(reportBugId > 0)
+        //{
+        //    reportBugModel = new ReportBugModel
+        //    {
+        //        Id = reportBugId,
+        //        Title = title,
+        //        Description = description += "<img src='" +imagedesc+ "'/>",
+        //        ReportBugStatus = (EnumReportBugStatus)reportBugStatus
+        //    };
+        //}
+
+        //StateHasChanged();
+    }
+
+ public async Task OpenDialog(int _reportBugId, string _imagedesc,  string _title,string _description,byte reportBugStatus)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        this.reportBugId = _reportBugId;
+        this.title=_title;
+        this.description = _description;
+        this.imagedesc = _imagedesc;
+
+        if(reportBugId > 0)
+        {
+            reportBugModel = new ReportBugModel
+            {
+                Id = reportBugId,
+                Title = title,
+                Description = description += "<img src='" +imagedesc+ "'/>",
+                ReportBugStatus = (EnumReportBugStatus)reportBugStatus
+            };
+        }
+
+        StateHasChanged();
+    }
+    private async Task Submit(EditContext context)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        bool isValid = context.Validate();
+        await UploadObj.UploadAsync();
+        if (isValid)
+        {
+            Console.WriteLine(this.ideaModelObj.Value);
+            reportBugModel.Description = ideaModelObj.Value;
+            reportBugModel.ReportedBy = user?.Identity?.Name;
+            reportBugModel.ReportBugStatus = (EnumReportBugStatus)reportBugStatus;
+            reportBugModel = await _reportBugService.UpsertReportBugAsync(reportBugModel);
+            this.refreshParent = true;
+            this.OnSubmitHandler();
+            CloseDialog();
+        }
+        else
+        {
+            // Form has invalid inputs.
+        }
+        
+    }
+    public async Task OnChangeUpload(UploadChangeEventArgs args) 
+    { 
+        var authState =  AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.Result.User;
+        foreach (var file in args.Files) 
+        { 
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=storageaccountlanz9402;AccountKey=w/99ADayKZqqXlj2oP7g/RJUGMadxsKh/KUW8WQr1SQypKKqRNn5pXANZMQuuzj4BqEOhX98Ga8idLP45mnNhQ==;EndpointSuffix=core.windows.net");
+            var blobClient = cloudStorageAccount.CreateCloudBlobClient(); 
+            var container = blobClient.GetContainerReference("images");
+            await container.CreateIfNotExistsAsync(); 
+            await container.SetPermissionsAsync(new BlobContainerPermissions() 
+            { 
+                PublicAccess = BlobContainerPublicAccessType.Blob 
+            });
+            string Filename = this.GenerateFileName(file.FileInfo.Name,user.Identity.Name);
+            var blob = container.GetBlockBlobReference(Filename); 
+            blob.Properties.ContentType = file.FileInfo.MimeContentType;
+            byte[] bytes = file.Stream.ToArray();
+            await blob.UploadFromByteArrayAsync(bytes, 0, bytes.Length);
+            string url = blob.Uri.AbsoluteUri;
+
+             _ = _reportBugService.UpsertReportBugImageBlobUrlAsync(reportBugModel.Id, url);
+        } 
+    }
+    private string GenerateFileName(string fileName, string subDirectory)
+    {
+        string strFileName = string.Empty;
+        string[] strName = fileName.Split('.');
+        strFileName = subDirectory + "/" + DateTime.Now.ToUniversalTime().ToString("yyyyMMdd\\THHmmssfff") + "." + strName[strName.Length - 1];
+        return strFileName;
+    }
+     public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+   private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+}

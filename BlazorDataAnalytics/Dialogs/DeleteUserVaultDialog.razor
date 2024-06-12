@@ -1,0 +1,161 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserVaultService
+@using BlazorDataAnalytics.Services.LogService
+@using BlazorDataAnalytics.Services.KeyVaultManager
+@using Syncfusion.Blazor.Data
+@using Azure.Identity
+@using Azure.Analytics.Synapse.Artifacts
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Blazored.Toast
+@using Blazored.Toast.Services
+
+@inject IUserVaultService _userVaultService
+@inject IKeyVaultManager _keyVaultManager
+@inject ILogService _logService
+@inject IConfiguration _configuration
+@inject IUserSecurityService _userSecurityService
+@inject IToastService toastService
+
+<SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Delete Connection</Header>
+        <Content>
+            <div class="modal-content">
+                <SfSpinner @bind-Visible="showSpinner">
+                </SfSpinner>
+                <div class="modal-body">
+                    Do you want to delete this User Vault Id: <b>@userVaultId</b> ?
+                    <br />
+                    "Warning: Reports using this system will have missing data"
+                </div>
+                <div class="modal-footer">
+                    <SfButton CssClass="e-medium" OnClick="@(async (e) => await DeleteWithData())">Delete With Data</SfButton>
+                    <SfButton CssClass="e-medium" OnClick="@(async (e) => await DeleteReportBugId())">Delete</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="CloseDialog">Close</SfButton>
+                </div>
+            </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+
+@code {
+
+    [Parameter]
+    public int customerUserId { get; set; } = 0;
+
+    [Parameter]
+    public string userName { get; set; }
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+
+    [Parameter]
+    public int userVaultId { get; set; } = 0;
+
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    private bool showSpinner { get; set; } = false;
+
+    private string customerTenantName { get; set; }
+
+    public bool IsVisible { get; set; } = false;
+
+    public async Task OpenDialog(int userVaultId)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        this.userVaultId = userVaultId;
+        this.StateHasChanged();
+    }
+
+    public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+
+    private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+
+    private async Task DeleteReportBugId()
+    {
+        showSpinner = true;
+        if(userVaultId > 0)
+        {
+            await _keyVaultManager.DeleteSecret(userVaultId.ToString());
+            await _userVaultService.DeletetUserVaultAsync(userVaultId);
+
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            var message =  "Deleted DataSource with UserVault Id: "  + userVaultId;
+            var log = new LogModel { Date =  System.DateTime.Now, UserEmail = user.Identity.Name, Message = message, Module = "DataSource"  };
+            await _logService.Log(log);
+        }
+        showSpinner = false;
+        this.refreshParent = true;
+        this.OnSubmitHandler();
+        this.CloseDialog();
+    }
+
+    private int customerTenantID { get; set; }
+    private async Task DeleteWithData()
+    {
+        try
+        {
+            showSpinner = true;
+
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+
+            customerTenantID = userNameGroupRolesModel.CustomerTenantId;
+            customerTenantName = userNameGroupRolesModel.CustomerName;
+
+            var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+            {
+                ManagedIdentityClientId = _configuration.GetSection("AzureAd:ClientId").Value,
+                InteractiveBrowserTenantId = _configuration.GetSection("AzureAd:InteractiveBrowserTenantId").Value,
+                SharedTokenCacheTenantId = _configuration.GetSection("AzureAd:SharedTokenCacheTenantId").Value,
+                VisualStudioTenantId = _configuration.GetSection("AzureAd:VisualStudioTenantId").Value,
+                SharedTokenCacheUsername = _configuration.GetSection("AzureAd:SharedTokenCacheUsername").Value
+            });
+
+
+
+            var pipelineClient = new PipelineClient(
+            new Uri("https://qtx-daaas.dev.azuresynapse.net"),
+            credential);
+
+            var userVaultModel  = await _userVaultService.GetUserVaultById(userVaultId);
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "Customer", customerTenantName },
+                { "Application", userVaultModel.SystemName },
+            };
+            var run = await pipelineClient.StartDeletePipelineAsync("Master");
+            toastService.ShowSuccess("Succesfuly Deleted", "Sync starterd with Id:");
+
+        } 
+        catch (Exception ex) 
+        {
+            toastService.ShowError(ex.Message, "Error!");
+        } finally
+        {
+            showSpinner = false;
+            this.refreshParent = true;
+            this.OnSubmitHandler();
+            this.CloseDialog();
+        }
+    }
+
+
+}

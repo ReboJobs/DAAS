@@ -1,0 +1,420 @@
+﻿@page "/ServicePrincipal"
+@using BlazorDataAnalytics.Enums
+@using Microsoft.Identity.Client
+@using Microsoft.IdentityModel.Clients.ActiveDirectory
+@using Persistence.Config.Entities
+@using Syncfusion.Blazor.Navigations
+@using BlazorDataAnalytics.Services.ServicePrincipalService
+@using Microsoft.PowerBI.Api.Models
+@using Blazorade.Msal.Services
+@using BlazorDataAnalytics.Models
+
+@inject IAppOwnsDataMultiTenantDbService _IAppOwnsDataMultiTenantDbService
+@inject PowerBiServiceApi powerBiServiceApi
+@inject IConfiguration _configuration
+@inject BlazoradeMsalService msalService
+
+<SfTab LoadOn="ContentLoad.Demand">
+    <TabItems>
+        <TabItem>
+            <HeaderTemplate>Tenants</HeaderTemplate>
+            <ContentTemplate>
+                <div class="content-wrapper">
+        <div class="row">
+            <SfGrid DataSource="@tenantsList" AllowPaging="true" Toolbar="@(new string[] {"Add","Edit","Delete","Update","Cancel" })">  
+              <GridEvents TValue="Persistence.Config.Entities.ServicePrincipalTenant" OnActionComplete="ActionComplete"  OnActionBegin="ActionBeginHandler" ></GridEvents> 
+                <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="@EditMode.Dialog"  Dialog="DialogParams">
+                    <Template>
+                        @{
+                            var item = (context as ServicePrincipalTenant);
+                        }
+                        <div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                     <SfTextBox ID="TenantName" @bind-Value="@(item.Name)" FloatLabelType="FloatLabelType.Always" Placeholder="Tenant Name"></SfTextBox>
+                                </div>
+                                <div class="form-group col-md-12">
+                                     <SfTextBox ID="DBServer" @bind-Value="@(item.DatabaseServer)" FloatLabelType="FloatLabelType.Always" Placeholder="Database Server Name"></SfTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                     <SfTextBox ID="DBName" @bind-Value="@(item.DatabaseName)" FloatLabelType="FloatLabelType.Always" Placeholder="Database Name"></SfTextBox>
+                                </div>
+                                <div class="form-group col-md-12">
+                                      <SfTextBox ID="DBUname" @bind-Value="@(item.DatabaseUserName)" FloatLabelType="FloatLabelType.Always" Placeholder="SQL Server User Name"></SfTextBox>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-12">
+                                    <SfTextBox ID="DBPassword" @bind-Value="@(item.DatabaseUserPassword)" Type="InputType.Password" FloatLabelType="FloatLabelType.Always" Placeholder="SQL Server User Password"></SfTextBox>
+                                </div>
+                            </div>
+                            <br/>
+                                     <div class="control-section">
+                                            <div class="radio-control">
+                                    <h6 class="row">Profile</h6>
+                                    <div class="row">
+                                        <SfRadioButton Label="Create Tenant using New Exclusive Profile (Recommended)" Name="Exclusive" Value="Yes" Checked="@checkedValue" @onchange="onValueChange" Disabled="!newlyCreated">@checkedValue</SfRadioButton>
+                                    </div>
+                                    <br/>
+                                    <div class="row">
+                                        <SfRadioButton Label="Create Tenant using Service Principal Profile from Pool" Name="Exclusive" Value="No" Checked="@checkedValue"  @onchange="onValueChange" Disabled="!newlyCreated">@checkedValue</SfRadioButton>
+                                    </div>
+                                       <div class="control-wrapper">
+                                            <label class="example-label">Select a Profile</label>
+                                            <SfDropDownList TItem="AppProfile" TValue="string" PopupHeight="230px"  Placeholder="Profile" @bind-Value="@DropDownValue" DataSource="@profileList" Enabled="!isExclusive">
+                                                <DropDownListFieldSettings Text="ProfileName" Value="Id"/>
+                                            </SfDropDownList>
+                                       </div>                                       
+                                </div>
+                            </div>                            
+                        </div>
+                        
+                    </Template>
+                </GridEditSettings>
+                <GridColumns>
+                    <GridColumn Field=@nameof(ServicePrincipalTenant.Name) HeaderText="Tenant Name" IsPrimaryKey="true" ValidationRules="@(new ValidationRules{ Required=true})" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                    <GridColumn Field=@nameof(ServicePrincipalTenant.DatabaseServer) HeaderText="Database Server" ValidationRules="@(new ValidationRules{ Required=true})"></GridColumn>
+                    <GridColumn Field=@nameof(ServicePrincipalTenant.DatabaseName) HeaderText="Database" TextAlign="@TextAlign.Left" ValidationRules="@(new ValidationRules{ Required=true})" HeaderTextAlign="@TextAlign.Left"></GridColumn>
+                    <GridColumn Field=@nameof(ServicePrincipalTenant.WorkspaceId) HeaderText="Workspace Id" TextAlign="TextAlign.Left" Type="ColumnType.Date" ></GridColumn>
+                    <GridColumn Field=@nameof(ServicePrincipalTenant.WorkspaceUrl) HeaderText="Workspace Url" ></GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+            </ContentTemplate>
+        </TabItem>
+        <TabItem>
+            <HeaderTemplate>Profiles</HeaderTemplate>
+            <ContentTemplate>
+                      <div class="content-wrapper">
+                        <div class="row">
+                            <SfGrid DataSource="@appProfileList" AllowPaging="true" Toolbar="@(new string[] {"Add","Edit","Delete","Update","Cancel" })">  
+                              <GridEvents TValue="Persistence.Config.Entities.AppProfile" OnActionComplete="ActionCompleteProfile"  OnActionBegin="ActionBeginHandlerProfile" ></GridEvents> 
+                                <GridEditSettings AllowAdding="true" AllowEditing="true" AllowDeleting="true" Mode="@EditMode.Dialog" >
+                                    <Template>
+                                        @{
+                                            var item = (context as AppProfile);
+                                        }
+                                        <div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-12">
+                                                     <SfTextBox ID="TenantName" @bind-Value="@(item.ProfileName)" FloatLabelType="FloatLabelType.Always" Placeholder="Profile Name"></SfTextBox>
+                                                </div>
+                                            </div>                        
+                                        </div>
+                        
+                                    </Template>
+                                </GridEditSettings>
+                                <GridColumns>
+                                    <GridColumn Field=@nameof(AppProfile.Id) HeaderText="Profile Name" IsPrimaryKey="true" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center" Visible="false"></GridColumn>
+                                     <GridColumn Field=@nameof(AppProfile.ProfileName) HeaderText="Profile Name" ValidationRules="@(new ValidationRules{ Required=true})" TextAlign="@TextAlign.Center" HeaderTextAlign="@TextAlign.Center"></GridColumn>
+                                    <GridColumn Field=@nameof(AppProfile.Exclusive) HeaderText="Exclusive"></GridColumn>
+                                </GridColumns>
+                            </SfGrid>
+                        </div>
+                    </div>
+
+            </ContentTemplate>
+        </TabItem>
+    </TabItems>
+</SfTab>
+        <SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="Visibility" AllowPrerender="true" IsModal="true">
+            <DialogTemplates>
+                <Header> Delete Report</Header>
+                <Content>
+                    <div class="row">
+                           <div class="container">
+                                      <div class="alert alert-danger">
+                                        <p style="font-size:1rem;">
+                                         This action will physically delete the Service Principal. 
+                                       <span style="font-weight:bold;">Would you like to continue? This action cannot be undone!</span></p>                                                
+                                      <SfProgressButton Content="@Content" EnableProgress="true" CssClass="@CssClass" IconCss="e-icons e-delete e-small camera" >
+                                            <ProgressButtonEvents OnBegin="Begin" OnEnd="End"></ProgressButtonEvents>
+                                        </SfProgressButton>
+                               </div>
+                            </div> 
+
+                    </div>
+                </Content>
+            </DialogTemplates>
+        </SfDialog>
+          <SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="VisibilityDeleteProfile" AllowPrerender="true" IsModal="true">
+            <DialogTemplates>
+                <Header> Delete Report</Header>
+                <Content>
+                    <div class="row">
+                           <div class="container">
+                                      <div class="alert alert-danger">
+                                        <p style="font-size:1rem;">
+                                         This action will physically delete the Profile including the Service Principal. 
+                                       <span style="font-weight:bold;">Would you like to continue? This action cannot be undone!</span></p>                                                
+                                      <SfProgressButton Content="@Content" EnableProgress="true" CssClass="@CssClass" IconCss="e-icons e-delete e-small camera" >
+                                            <ProgressButtonEvents OnBegin="Begin" OnEnd="End"></ProgressButtonEvents>
+                                        </SfProgressButton>
+                               </div>
+                            </div> 
+
+                    </div>
+                </Content>
+            </DialogTemplates>
+        </SfDialog>
+@code {
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+    private string checkedValue = "Yes";
+    public string DropDownValue { get; set; }
+    private bool isExclusive { get; set; } = true;
+    private List<ServicePrincipalTenant> tenantsList = new List<ServicePrincipalTenant>();
+    private List<AppProfile> profileList= new List<AppProfile>();
+    private List<AppProfile> appProfileList = new List<AppProfile>();
+    private bool newlyCreated { get; set; } = true;
+    private bool Visibility { get; set; } = false;
+    public string Content = "Delete";
+    public string CssClass = "e-hide-spinner";
+    private int profileToDele{ get; set; }
+    private bool VisibilityDeleteProfile { get; set; }
+    private DialogSettings DialogParams = new DialogSettings { MinHeight = "400px", Width = "450px" };
+    private Blazorade.Msal.Security.AuthenticationResult token = null;
+    private AppProfile profileToDelete{ get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await GetData();
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+
+    }
+    protected async Task GetData()
+    {
+        tenantsList = _IAppOwnsDataMultiTenantDbService.GetTenants().ToList();
+        profileList = _IAppOwnsDataMultiTenantDbService.GetProfilesInPool().ToList();
+        appProfileList =  _IAppOwnsDataMultiTenantDbService.GetProfiles().ToList();
+
+    }
+    #region Events
+    private async void onValueChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        if(args.Value.ToString().Trim()=="Yes")
+            isExclusive = true;
+        else
+            isExclusive = false;
+        StateHasChanged();
+    }
+    public void ActionBeginHandler(ActionEventArgs<Persistence.Config.Entities.ServicePrincipalTenant> args)
+    {
+
+
+    }
+    public void ActionBeginHandlerProfile(ActionEventArgs<Persistence.Config.Entities.AppProfile> args)
+    {
+
+
+    }
+    public async void ActionComplete(ActionEventArgs<Persistence.Config.Entities.ServicePrincipalTenant> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Cancel)
+        {
+            // Triggers once cancel operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            try{
+                //if (newlyCreated)
+                //{
+                //    OnboardTenant(args.Data, isExclusive, true);
+                //    showAlertMessage(Enums.AlertStatus.Success, "Service Principal" + args.Data.Name + " successfully saved.", "Success!");
+                //    newlyCreated = false;
+                //    await GetData();
+
+                //}
+                //else
+                //{
+                //    OnboardTenant(args.Data, isExclusive, false);
+                //    showAlertMessage(AlertStatus.Success, "Service Principal" + args.Data.Name + " successfully saved.", "Success!");
+                //    newlyCreated = false;
+                //    await GetData();
+                //}
+            }catch(Exception ex)
+            {
+                showAlertMessage(Enums.AlertStatus.Danger,ex.Message, "Error!");
+            }
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            this.Visibility =!this.Visibility;
+            profileToDele = args.Data.Id;
+            StateHasChanged();
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            newlyCreated = true;
+            isExclusive = true;
+            StateHasChanged();
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            newlyCreated = false;
+            isExclusive = false;
+            StateHasChanged();
+        }
+    }
+    public async void ActionCompleteProfile(ActionEventArgs<Persistence.Config.Entities.AppProfile> args)
+    {
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Cancel)
+        {
+            // Triggers once cancel operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Save)
+        {
+            if (_IAppOwnsDataMultiTenantDbService.checkExist(args.Data.ProfileName))
+            {
+                showAlertMessage(AlertStatus.Warning, "Profile already exist!", "Warning!");
+                return;
+            }
+            else
+            {
+                CreateProfile(args.Data.ProfileName);
+            }
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            VisibilityDeleteProfile = !VisibilityDeleteProfile;
+            profileToDelete = args.Data;
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.BeginEdit)
+        {
+            if(args.Data !=null && args.Data.Exclusive){
+                showAlertMessage(AlertStatus.Warning, "Cannot update exclusive Profile", "Warning!");
+                return;
+            }
+
+        }
+    }
+    private async void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        //ValueChange Event triggered
+        if(args.Value.ToString().Trim()=="Yes")
+            isExclusive = true;
+        else
+            isExclusive = false;
+    }
+    #endregion
+    public void Begin(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        Content = "Deleting...";
+        CssClass = "e-hide-spinner e-info border-radius";
+    }
+    public async Task End(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        if(this.Visibility)
+            DeleteTenant(profileToDele);
+
+        if (this.VisibilityDeleteProfile)
+            DeleteProfile(profileToDelete);
+        Content = "Deleted";
+        CssClass = "e-hide-spinner e-success border-radius";
+        Content = "Delete";
+        CssClass = "e-hide-spinner border-radius";
+        this.Visibility =!this.Visibility;
+    }
+    //public void OnboardTenant(CustomerTenant servicePrincipal, bool Exclusive, bool isNewlyCreated) {
+
+    //    //if (isExclusive & isNewlyCreated)
+    //    //{
+    //    //    AppProfile profile = CreateProfile(servicePrincipal.Name, true);
+    //    //    servicePrincipal.Profile = profile;
+    //    //}
+    //    //else if (isNewlyCreated & !isExclusive & DropDownValue !=null)
+    //    //{
+    //    //      servicePrincipal.Profile = GetAppProfile(Convert.ToInt32(DropDownValue));
+    //    //}
+    //    //else
+    //    //{
+
+    //    //    servicePrincipal.Profile = GetAppProfile(servicePrincipal.ProfileId);
+    //    //}
+    //    //if (isNewlyCreated)
+    //    //{
+    //    //    servicePrincipal = this.powerBiServiceApi.OnboardNewTenant(servicePrincipal.Name, servicePrincipal.Profile.ProfileId);
+    //    //    servicePrincipal.Created = DateTime.Now.AddHours(0); // no time offset for local dev
+    //    //    _IAppOwnsDataMultiTenantDbService.OnboardNewTenant(servicePrincipal);
+    //    //}
+    //    //else
+    //    //{
+    //    //    //   tenant = this.powerBiServiceApi.UpdateTenant(tenant);
+    //    //    _IAppOwnsDataMultiTenantDbService.UpdateTenant(servicePrincipal);
+    //    //}
+
+    //}
+    public AppProfile CreateProfile(string ProfileName, bool Exclusive = false) {
+        ServicePrincipalProfile servicePrincipalProfile = this.powerBiServiceApi.CreateProfile(ProfileName);
+
+        AppProfile appProfile = new AppProfile {
+        ProfileId = servicePrincipalProfile.Id.ToString(),
+        ProfileName = ProfileName,
+        Created = DateTime.Now,
+        Exclusive = Exclusive
+      };
+
+        return _IAppOwnsDataMultiTenantDbService.CreateProfile(appProfile);
+    }
+
+    public AppProfile GetAppProfile(int ProfileId) {
+        return _IAppOwnsDataMultiTenantDbService.GetProfile(ProfileId);
+    }
+    private void showAlertMessage(string alertType, string message, string title)
+    {
+        var options2 = new ModalOptions { UseCustomLayout = true };
+
+        var modalParams2 = new ModalParameters();
+
+        modalParams2.Add(nameof(Dialogs.MessageBox.alert), alertType);
+        modalParams2.Add(nameof(Dialogs.MessageBox.message), message);
+        modalParams2.Add(nameof(Dialogs.MessageBox.title), title);
+
+        var res2 =Modal.Show<Dialogs.MessageBox>(title, modalParams2, options2).Result;
+
+    }
+    public void DeleteTenant(int tenantId) {
+
+        var tenant = _IAppOwnsDataMultiTenantDbService.GetTenant(tenantId);
+
+        bool exclusiveProfile = tenant.Profile.Exclusive;
+        string profileId = tenant.Profile.ProfileId;
+        try
+        {
+            this.powerBiServiceApi.DeleteWorkspace(tenant);
+            _IAppOwnsDataMultiTenantDbService.DeleteTenant(tenant);
+
+            if (exclusiveProfile)
+            {
+                DeleteProfile(tenant.Profile);
+            }
+
+         }catch(Exception ex)
+            {
+                showAlertMessage(Enums.AlertStatus.Danger,ex.Message, "Error!");
+         }
+    }
+    public void DeleteProfile(AppProfile profile) {
+        try{
+        this.powerBiServiceApi.DeleteProfile(profile.ProfileId);
+        _IAppOwnsDataMultiTenantDbService.DeleteProfile(profile.Id);
+
+         }catch(Exception ex)
+            {
+                showAlertMessage(Enums.AlertStatus.Danger,ex.Message, "Error!");
+            }
+    }
+
+
+    }

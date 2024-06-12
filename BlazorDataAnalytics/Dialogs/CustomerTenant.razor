@@ -1,0 +1,170 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using BlazorDataAnalytics.Services.ServicePrincipalService
+@using Blazorade.Msal.Services
+@using Microsoft.PowerBI.Api.Models
+@using Persistence.Config.Entities
+@using Syncfusion.Blazor.Data
+@inject IUserSecurityService _userSecurityService
+@inject BlazoradeMsalService msalService
+
+@inject IAppOwnsDataMultiTenantDbService _IAppOwnsDataMultiTenantDbService
+@inject PowerBiServiceApi powerBiServiceApi
+@inject IUserSecurityService _iUserSecurityService
+
+<style> 
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    } 
+</style> 
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050; max-width: 40%">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Customer Tenant</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <EditForm id="frmCustomerTenant" Model="@customerTenantModel" OnSubmit="Submit">
+                 <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="id">Id</label>
+                         <SfTextBox Placeholder="Id" Value="@(customerTenantModel.Id.ToString())" Readonly=true> </SfTextBox>
+                    </div>
+                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Title</label>
+                         <SfTextBox ID="Name" Placeholder="Name" @bind-Value="customerTenantModel.Name"></SfTextBox>
+                    </div>
+                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Workspace (Guid) Id</label>
+                         <SfTextBox ID="WorkspaceId" Placeholder="Workspace Id" @bind-Value="workSpaceIdStr" Enabled="false"></SfTextBox>
+                     </div>
+                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="active">Active</label>
+                         <SfCheckBox @bind-Checked="customerTenantModel.IsActive" ></SfCheckBox>
+                     </div>
+                </div>
+             </EditForm>
+            <div class="modal-footer">
+                    <SfButton CssClass="e-medium" HtmlAttributes="@(new() { { "form", "frmCustomerTenant" } })">Submit</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="Cancel">Close</SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int customerTenantId { get; set; } = 0;
+    [EditorRequired]
+    [Parameter]
+    public string name { get; set; }
+
+    [Parameter]
+    public Guid workSpaceId { get; set; }
+
+    [Parameter]
+    public bool isActive { get; set; } = true;
+
+    private CustomerTenantModel customerTenantModel { get; set; } = new CustomerTenantModel();
+
+    private string workSpaceIdStr { get; set; } = string.Empty;
+
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        workSpaceIdStr = workSpaceId.ToString();
+        if(customerTenantId > 0)
+        {
+            var customerTenant = _iUserSecurityService.GetCustomerTenants(customerTenantId).Result;
+            customerTenantModel = new CustomerTenantModel
+            {
+                Id = customerTenantId,
+                Name = name,
+                WorkspaceId = workSpaceId,
+                IsActive = isActive,
+                WorkspaceUrl = customerTenant.WorkspaceUrl,
+                ProfileId = customerTenant.ProfileId
+            };
+        }
+        else
+        {
+            customerTenantModel.IsActive = true;
+        }
+
+        StateHasChanged();
+    }
+
+
+    private async Task Submit(EditContext context)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if(customerTenantId <= 0){
+           customerTenantModel.Name = "DAaaS-" + customerTenantModel.Name;
+            var profile= CreateProfile(customerTenantModel.Name , true);
+            var customerTenant = this.powerBiServiceApi.OnboardNewTenant(customerTenantModel.Name, profile.ProfileId);
+
+            customerTenantModel.WorkspaceId = customerTenant.WorkspaceId;
+            customerTenantModel.ProfileId = profile.Id;
+            customerTenantModel.WorkspaceUrl = customerTenant.WorkspaceUrl; 
+
+       }
+        bool isValid = context.Validate();
+
+        if (isValid)
+        {
+            customerTenantModel = await _userSecurityService.UpsertCustomerTenant(customerTenantModel);
+            CustomerUserGroupModel groupModel = new CustomerUserGroupModel();
+            groupModel.Id = 0;
+            groupModel.CustomerTenantId = customerTenantModel.Id;
+            groupModel.GroupName = $"ReadWrite {customerTenantModel.Name}";
+            groupModel.IsActive = customerTenantModel.IsActive;
+            groupModel.ViewAllReport = true;
+            var record = await _userSecurityService.UpsertCustomerUserGroup(groupModel);
+            await _modalInstance.CloseAsync(ModalResult.Ok<CustomerTenantModel>(customerTenantModel));
+        }
+        else
+        {
+            // Form has invalid inputs.
+        }
+        
+    }
+        public AppProfile CreateProfile(string ProfileName, bool Exclusive = false) {
+        ServicePrincipalProfile servicePrincipalProfile = this.powerBiServiceApi.CreateProfile(ProfileName);
+
+        AppProfile appProfile = new AppProfile {
+        ProfileId = servicePrincipalProfile.Id.ToString(),
+        ProfileName = ProfileName,
+        Created = DateTime.Now,
+        Exclusive = Exclusive
+      };
+
+        return _IAppOwnsDataMultiTenantDbService.CreateProfile(appProfile);
+    }
+
+}

@@ -1,0 +1,422 @@
+﻿@using BlazorDataAnalytics.Data
+@using BlazorDataAnalytics.Dialogs
+@using Microsoft.Identity.Client
+@using Microsoft.PowerBI.Api
+@using Microsoft.PowerBI.Api.Models
+@using Microsoft.Rest
+@using Microsoft.Azure.Management.DataFactory.Models
+@using Azure.Analytics.Synapse.Artifacts
+@using Azure.Identity
+@using System.Net.Http
+@using System.Web
+@using Models
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.KeyVaultManager
+@using BlazorDataAnalytics.Services.UserVaultService
+@using BlazorDataAnalytics.Services.UserSecurityService
+
+@inject IKeyVaultManager _keyVaultManager
+@inject IUserVaultService _userVaultService
+@inject IUserSecurityService _userSecurityService
+@inject IConfiguration _configuration
+
+@page "/datasources"
+
+
+<PageTitle>User Vault</PageTitle>
+<BlazorDataAnalytics.Dialogs.MessageBoxDialog @ref="messageBoxDialog" />
+<div class="row col-lg-8 filter-bar">
+    <div class="col-lg-12">
+        <h3 style="text-shadow: 1px 1px 5px white;text-align:center;">Datasources</h3>
+    </div>
+</div>
+
+
+<div class="col-lg-12 control-section" style="margin-top:1%;">
+    <SfSpinner @bind-Visible="showSpinner">
+    </SfSpinner>
+    <div class="content-wrapper">
+        <div class="row">
+            <SfGrid DataSource="@listUserVaults" Height="500" Width="100%" Toolbar="@(new List<string>() { "Add", "Search" })">
+                <GridEditSettings AllowAdding=true Mode="EditMode.Dialog"></GridEditSettings>
+                <GridEvents TValue="UserVaultModel" OnActionBegin="OnActionBegin"></GridEvents>
+                <GridColumns>
+                    <GridColumn Field=@nameof(UserVaultModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="20"></GridColumn>
+                    <GridColumn Field=@nameof(UserVaultModel.SystemName) HeaderText="System Name" ShowInColumnChooser="false" Width="30"></GridColumn>
+                    <GridColumn Field=@nameof(UserVaultModel.Description) HeaderText="Description" Width="100"></GridColumn>
+                    <GridColumn TextAlign="TextAlign.Center" Width="50">
+                        <Template>
+                            @{
+                                var userVault = (context as UserVaultModel);
+                                <div class="image">
+                                    <SfButton IconCss="e-icons e-edit e-btn-icon" CssClass="e-btn-grd" HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Edit"}})" @onclick="async (e) => await EditUserVault(userVault)"></SfButton>
+                                    <SfButton IconCss="e-icons e-delete-row e-btn-icon" CssClass="e-btn-grd" HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Delete Data Source and its data"}})" @onclick="async (e) => await ViewDeleteUserVault(userVault)"></SfButton>
+                                    <SfButton IconCss="e-icons e-copy e-btn-icon" CssClass="e-btn-grd" HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Report Templates"}})" @onclick="async (e) => await  ViewPowerBITemplate(userVault)"></SfButton>
+                                    <SfButton IconCss="e-icons e-play e-btn-icon" CssClass="e-btn-grd" HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Force Sync"}})" @onclick="async (e) => await  RunAzureSynapsePipeline(userVault)"></SfButton>
+                                </div>
+                            }
+                        </Template>
+                    </GridColumn>
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+
+<UserVaultDialog @ref="UserVaultDialog" RefreshPageEventCallBack="RefreshCustomerPage" />
+<DeleteUserVaultDialog @ref="DeleteUserVaultDialog" RefreshPageEventCallBack="RefreshCustomerPage" />
+ <PowerBITemplateDialog @ref="powerBiTemplateDialog" />  
+
+
+
+
+@code {
+    BlazorDataAnalytics.Dialogs.MessageBoxDialog messageBoxDialog;
+    BlazorDataAnalytics.Dialogs.PowerBITemplateDialog powerBiTemplateDialog;
+    UserVaultDialog UserVaultDialog;
+    DeleteUserVaultDialog DeleteUserVaultDialog;
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    public string text { get; set; }
+
+    private int customerTenantID { get; set; }
+    private bool showSpinner { get; set; } = false;
+
+    private List<UserVaultModel> listUserVaults { get; set; } = new List<UserVaultModel>();
+
+    private UserNameGroupRolesModel userNameGroupRolesModel = new UserNameGroupRolesModel();
+    private string userNameIdentity { get; set; }
+    private string customerTenantName { get; set; }
+    private bool isPowerBITemplate { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+
+        customerTenantID = userNameGroupRolesModel.CustomerTenantId;
+        customerTenantName = userNameGroupRolesModel.CustomerName;
+
+        await SearchUserVaults();
+    }
+
+    //Events
+    public async void OnActionBegin(ActionEventArgs<UserVaultModel> args)
+    {
+        DatasetGovernanceModel model = new DatasetGovernanceModel();
+
+        if (args.RequestType == Syncfusion.Blazor.Grids.Action.Cancel)
+        {
+            // Triggers once cancel operation completes
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Add)
+        {
+            // Triggers once save operation completes
+            args.Cancel = true;
+            await AddUserVault();
+        }
+        else if (args.RequestType == Syncfusion.Blazor.Grids.Action.Delete)
+        {
+            // Triggers once delete operation completes
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SearchUserVaults();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchUserVaults()
+    {
+        showSpinner = true;
+        listUserVaults = await _userVaultService.SearchUserVault(text, customerTenantID);
+        showSpinner = false;
+        StateHasChanged();
+    }
+
+
+    private void RefreshCustomerPage(bool refreshParentPage)
+    {
+        if (refreshParentPage)
+        {
+            this.SearchUserVaults().ConfigureAwait(true);
+        }
+    }
+
+    private async Task AddUserVault()
+    {
+        UserVaultModel userVaultModel = null;
+        await UserVaultDialog.OpenDialog(userVaultModel);
+    }
+
+    private async Task EditUserVault(UserVaultModel userVaultModel)
+    {
+        isPowerBITemplate = false;
+        await UserVaultDialog.OpenDialog(userVaultModel);
+    }
+
+    private async Task ViewDeleteUserVault(UserVaultModel userVaultModel)
+    {
+        isPowerBITemplate = false;
+        if (userVaultModel != null)
+        {
+            DeleteUserVaultDialog.OpenDialog(userVaultModel.Id.Value);
+        }
+    }
+    private async Task ViewPowerBITemplate(UserVaultModel userVaultModel)
+    {
+        isPowerBITemplate = true;
+        StateHasChanged();
+        PowerBIClient _client;
+        PowerBIEmbedConfig _result;
+        Guid _workspaceId;
+        Reports _report;
+        AuthenticationResult authenticationResult = null;
+        authenticationResult = await DoAuthentication();
+
+        var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+        // var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+
+        _result = new PowerBIEmbedConfig();
+        _client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+        //Retrieve workspace ID from customer
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userNameIdentity = user?.Identity?.Name;
+        userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(userNameIdentity);
+
+
+        _workspaceId = userNameGroupRolesModel.WorkspaceId; //Customer Workspace
+
+        _report =  _client.Reports.GetReportsInGroup(new Guid( _configuration.GetSection("PowerBiTemplate:WorkspaceId").Value));
+       _report.Value = _report.Value.Where(x => x.Name.ToLower().Replace(" ","").Contains(userVaultModel.SystemName.ToLower().Replace(" ", ""))).ToList();
+
+        await powerBiTemplateDialog.OpenDialog(_workspaceId.ToString(), userVaultModel.Id ?? 0, customerTenantID, _client, _report, _result);
+
+    }
+    private async Task RunAzureSynapsePipeline(UserVaultModel userVaultModel)
+    {
+        isPowerBITemplate = false;
+        try
+        {
+            showSpinner = true;
+            var credential = new DefaultAzureCredential(new DefaultAzureCredentialOptions
+                {
+                    ManagedIdentityClientId = _configuration.GetSection("AzureAd:ClientId").Value,
+                    InteractiveBrowserTenantId = "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+                    SharedTokenCacheTenantId = "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+                    VisualStudioTenantId = "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+                    SharedTokenCacheUsername = "Eric@qualiticks.com"
+                });
+
+
+
+            var pipelineClient = new PipelineClient(
+            new Uri("https://qtx-daaas.dev.azuresynapse.net"),
+            credential);
+
+            var parameters = new Dictionary<string, object>
+            {
+                { "Customer", customerTenantName },
+                { "Application", userVaultModel.SystemName },
+            };
+
+            var run = await pipelineClient.CreatePipelineRunAsync("Master", parameters: parameters).ConfigureAwait(false);
+
+
+            messageBoxDialog.OpenDialog(AlertStatus.Success, "Sync starterd with Id: " + run.Value.RunId);
+        }
+        catch (Exception ex)
+        {
+
+            messageBoxDialog.OpenDialog(AlertStatus.Danger, ex.Message);
+
+        }
+        finally
+        {
+            showSpinner = false;
+        }
+    }
+
+    private const string AuthorityFormat = "https://login.microsoftonline.com/94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0/v2.0";
+    private const string MSGraphScope = "https://analysis.windows.net/powerbi/api/.default";
+    private async Task<Microsoft.Identity.Client.AuthenticationResult> DoAuthentication()
+    {
+        IConfidentialClientApplication daemonClient;
+        daemonClient = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+            .WithAuthority(string.Format(AuthorityFormat, _configuration.GetSection("AzureAd:TenantId").Value))
+            .WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+            .Build();
+
+        AuthenticationResult authResult = await daemonClient.AcquireTokenForClient(new[] { MSGraphScope }).ExecuteAsync();
+        return authResult;
+    }
+
+
+
+}
+<style>
+    @@media (min-width:320px) {
+        .filter-bar {
+            top: .7em;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    @@media (min-width:481px) {
+        .filter-bar {
+            top: .7em;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    @@media (min-width:641px) {
+        .filter-bar {
+            top: .7em;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    @@media (min-width:961px) {
+        .filter-bar {
+            cursor: pointer;
+            right: 13vw;
+            /* left: 5vw; */
+            top: .7em;
+            position: absolute;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    @@media (min-width:1025px) {
+        .filter-bar {
+            cursor: pointer;
+            right: 13vw;
+            /* left: 5vw; */
+            top: .7em;
+            position: absolute;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    @@media (min-width:1281px) {
+        .filter-bar {
+            cursor: pointer;
+            right: 13vw;
+            /* left: 5vw; */
+            top: .7em;
+            position: absolute;
+            text-align: center;
+            padding: 5px;
+            box-shadow: 0px 0px 0px 0px #a5aba594;
+            border-radius: 1px;
+            -webkit-tap-highlight-color: transparent;
+            border-color: transparent;
+            color: rgba(0,0,0,0.87);
+            transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    }
+
+    .e-btn-grd {
+        background-color: transparent !important;
+    }
+
+    .control-container {
+        background-color: #adb5bd;
+        height: 70vh;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .e-carousel .slide-content {
+        align-items: center;
+        display: flex;
+        font-size: 1.25rem;
+        height: 100%;
+        justify-content: center;
+    }
+
+    .floating-botton {
+        position: absolute;
+        bottom: 0;
+        right: 0px;
+        z-index: 3000;
+    }
+
+    .floating-container {
+        position: absolute;
+        width: 100%;
+        bottom: 10%;
+        left: 0px;
+        z-index: 3000;
+        background-color: rgba(135,206,235, 1);
+    }
+
+    .e-ddl.e-input-group.e-control-wrapper .e-input {
+        /*    font-size: 20px;
+            font-family: emoji;
+            color: #ab3243;
+            background: #32a5ab;
+        */
+    }
+
+    .e-dropdownbase .e-list-item.e-item-focus, .e-dropdownbase .e-list-item.e-active, .e-dropdownbase .e-list-item.e-active.e-hover, .e-dropdownbase .e-list-item.e-hover {
+        background-color: #1f9c99;
+        color: #2319b8;
+    }
+
+    .e-carousel .e-carousel-navigators .e-previous .e-btn:not(:disabled), .e-carousel .e-carousel-navigators .e-next .e-btn:not(:disabled), .e-carousel .e-carousel-navigators .e-play-pause .e-btn:not(:disabled) {
+        background-color: #adaaaa !important;
+    }
+
+    .e-dlg-center-center {
+        position: fixed !important;
+    }
+
+    .text-multiline textarea {
+        height: 300px !important;
+    }
+</style>

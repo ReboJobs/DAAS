@@ -1,0 +1,82 @@
+﻿@page "/customer-user-delete-dialog"
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Syncfusion.Blazor.Data
+@inject IUserSecurityService _userSecurityService
+
+
+<SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Delete Customer User</Header>
+        <Content>
+        <div class="modal-content">
+            <div class="modal-body">
+                Do you want to delete this User: <b>@userName</b> ?
+            </div>
+            <div class="modal-footer">
+                <SfButton CssC    lass="e-medium" OnClick="@(async (e) => await DeleteCustomerUserData())">Delete</SfButton>
+                 <SfButton CssClass="e-medium e-danger" OnClick="CloseDialog">Close</SfButton>
+            </div>
+        </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+
+
+    [Parameter]
+    public int customerUserId { get; set; } = 0;
+
+    [Parameter]
+    public string userName { get; set; }
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    public bool IsVisible { get; set; } = false;
+
+
+    public async Task OpenDialog(CustomerUserModel customerUserModel)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+
+        if (customerUserModel != null)
+        {
+            customerUserId = customerUserModel.Id;
+            userName = customerUserModel.UserName ?? string.Empty;
+        }
+        this.StateHasChanged();
+    }
+
+    public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+
+    private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+
+    private async Task DeleteCustomerUserData()
+    {
+
+        if(customerUserId > 0)
+        {
+            await _userSecurityService.DeleteCustomerUser(customerUserId);
+        }
+        this.refreshParent = true;
+        this.OnSubmitHandler();
+        this.CloseDialog();
+    }
+
+
+}

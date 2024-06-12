@@ -1,0 +1,55 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:50756",
+      "sslPort": 44376
+    }
+  },
+  "profiles": {
+    "BlazorDataAnalytics - DEV": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7231;http://localhost:5231",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "AZURE_CLIENT_ID": "8b29c164-355c-4ee0-96d5-5c8f927f0b04",
+        "AZURE_TENANT_ID": "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+        "AZURE_CLIENT_SECRET": "Z6r7Q~f3YHixLNTbUDZy4Y5SEEWrKeKykjmww"
+      }
+    },
+    "BlazorDataAnalytics - UAT": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7231;http://localhost:5231",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "UAT",
+        "AZURE_CLIENT_ID": "8b29c164-355c-4ee0-96d5-5c8f927f0b04",
+        "AZURE_TENANT_ID": "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+        "AZURE_CLIENT_SECRET": "Z6r7Q~f3YHixLNTbUDZy4Y5SEEWrKeKykjmww"
+      }
+    },
+    "BlazorDataAnalytics - PROD": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": true,
+      "applicationUrl": "https://localhost:7231;http://localhost:5231",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Production",
+        "AZURE_CLIENT_ID": "8b29c164-355c-4ee0-96d5-5c8f927f0b04",
+        "AZURE_TENANT_ID": "94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0",
+        "AZURE_CLIENT_SECRET": "Z6r7Q~f3YHixLNTbUDZy4Y5SEEWrKeKykjmww"
+      }
+    },
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

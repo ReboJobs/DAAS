@@ -1,0 +1,513 @@
+﻿@using Azure.Security.KeyVault.Secrets
+@using BlazorDataAnalytics.Data
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportDashboardService
+@using BlazorDataAnalytics.Services.UserVaultService
+@using BlazorDataAnalytics.Services.KeyVaultManager
+@using Blazorade.Msal.Services
+@using Microsoft.AnalysisServices.Tabular
+@using Microsoft.Data.SqlClient
+@using Microsoft.Identity.Client
+@using Microsoft.PowerBI.Api
+@using Microsoft.PowerBI.Api.Models
+@using Microsoft.Rest
+@using Persistence.Config.Entities
+@using Syncfusion.Blazor.Data
+@using Microsoft.Azure.KeyVault;
+@using Microsoft.Azure.KeyVault.Models;
+@using SecretProperties = Azure.Security.KeyVault.Secrets.SecretProperties;
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Syncfusion.Blazor.Diagram
+@using Syncfusion.Blazor.Navigations
+@using BlazorDataAnalytics.Services.ServicePrincipalService;
+
+@inject NavigationManager UriHelper
+@inject BlazoradeMsalService msalService
+@inject IJSRuntime JSRuntime
+@inject IConfiguration _configuration
+@inject IUserSecurityService _userSecurityService
+@inject IUserVaultService _userVaultService
+@inject IKeyVaultManager _keyVaultManager
+@inject IReportDashboardService _reportDashboardService
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAppOwnsDataMultiTenantDbService _iAppOwnsDataMultiTenantDbService
+
+@using Microsoft.AspNetCore.Html
+@using System.ComponentModel.DataAnnotations
+@using System.Web
+<style> 
+    .text-multiline textarea{ 
+        height: 300px !important; 
+    } 
+</style> 
+<BlazorDataAnalytics.Dialogs.MessageBoxDialog @ref="MessageDialog" />
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050; max-width: 66%">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Available Template</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+                <div class="modal-body">
+                <div class="control-container">
+                   <SfSpinner @bind-Visible="showSpinner">
+                         </SfSpinner>
+                     @if(_report !=null && _report.Value.Count() > 0 ){
+                        <SfCarousel   AutoPlay="false"  SelectedIndexChanged="@OnChangeCarrosel"  Id="CarouselSlide" EnablePersistence="true" EnableTouchSwipe="true" NextButtonTemplate="@NextButtonTemplate">
+                           <ChildContent>
+                       
+                            @if (_report != null)
+                            {
+                             foreach(var item in _report.Value)
+                                       {
+                                    <CarouselItem>
+                                      <div class="floating-container" >
+                                           <h3>@item.Name</h3>
+                                      </div>
+                                        <div @ref="@carouselComponents[item.Id.ToString()]" style="width:100%;max-width: 100%;height:500px" />
+                                        </CarouselItem>
+                                       
+                                    }
+                            }
+
+                            </ChildContent>
+                        </SfCarousel>
+                        }else{                           
+
+                            <div class="container" style="  height: 100%; align-items: center;text-align:center;">
+                          <div class="alert alert-success">
+                              <h2> No Available Template.</h2>
+                          </div>
+
+                </div>
+                        }
+                    
+                </div>
+                </div>
+            <div class="modal-footer">
+                <div class="container">
+                 <div class="row">
+                     <div class="col-sm">
+                            <SfDropDownList Placeholder="Bind to a Dataset" TItem="Dataset" TValue="string" @bind-Value="selectedDataset" DataSource="@datasetListCustomer"> 
+                                 <DropDownListFieldSettings Text="Name" Value="Id"></DropDownListFieldSettings> 
+                                 <DropDownListEvents TItem="Dataset" TValue="string" ValueChange="@ValueChangeHandler"></DropDownListEvents> 
+                             </SfDropDownList> 
+                     </div>
+
+                   </div>
+                 <div class="row">
+                       <div class="col-sm">   
+                           <br/>
+                             <SfButton CssClass="e-info" Content="Create Report" OnClick="@OnBtnClick"  Disabled="!IsEnableReportButton"></SfButton>
+                         </div>
+                   </div>
+
+                 </div>
+            </div>
+                 <div id="target">
+                        <SfDialog Target="#target" Width="300px" ShowCloseIcon="true" @bind-Visible="Visibility" AllowPrerender="true" IsModal="true">
+                            <DialogTemplates>
+                                <Header> Entry </Header>
+                                <Content> 
+                                    <div class="row">
+                                    <SfTextBox Placeholder="Enter Report Name"  @bind-Value="@reportName" CssClass="@CssClass"></SfTextBox>
+                                     <br/><br/>
+                                           <SfProgressButton Content="@Content" EnableProgress="true" CssClass="e-success" Duration="1000"  IconCss="e-icons e-save e-small camera" Disabled="!enableButton">
+                                            <ProgressButtonEvents OnBegin="Begin" OnEnd="End"></ProgressButtonEvents>
+                                        </SfProgressButton> 
+                                   </div>
+                                </Content>
+                            </DialogTemplates>
+                              <DialogPositionData X="center" Y="center"></DialogPositionData>
+                        </SfDialog>
+                </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public Guid _workspaceId { get; set; }
+    [Parameter]
+    public int? id { get; set; } = 0;
+    [Parameter]
+    public int _customerId { get; set; }
+    [Parameter]
+    public Reports _report { get; set; }
+    [Parameter]
+    public PowerBIClient _client{ get; set; }
+    [Parameter]
+    public PowerBIEmbedConfig _result{ get; set; }
+
+    MessageBoxDialog MessageDialog;
+
+    private bool disableButton { get; set; } = false;
+    private bool showSpinner { get; set; }
+    private ElementReference PowerBIElement;
+    private IList<Group>? _group;
+    private bool Visibility { get; set; } = false;
+    private bool enableButton { get; set; } = true;
+    private int _customerTenantId { get; set; }
+    private UserVaultAppDetailModel UserVaultAppDetail = new UserVaultAppDetailModel();
+    [Required]
+    public string DropVal{ get; set; }
+    [Required]
+    public string selectedDataset{ get; set; }
+    private Guid _reportId;   
+    string buttonColor = string.Empty;
+    string logo = string.Empty;
+    string backgroundBody = string.Empty;
+    private bool isRendered = false;
+    private UserThemeSettingModel userTheme { get; set; } = new UserThemeSettingModel() ;
+    public string CssClass { get; set; }
+    public string Content = "Save....";
+    public string reportName { get; set; }
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+    private List<string> identifiersUI  = new List<string>();
+    private Dictionary<string, ElementReference> carouselComponents = new Dictionary<string, ElementReference>();
+    private List<ReportDetail> reportList = new List<ReportDetail>();
+    public int SelectedIndex { get; set; }
+    public EventCallback<int> SelectedIndexChanged { get; set; }
+    public RenderFragment NextButtonTemplate { get; set; }
+    private UserNameGroupRolesModel userNameGroupRolesModel = new UserNameGroupRolesModel();
+    private string userNameIdentity { get; set; }
+    private List<Dataset> datasetListCustomer = new List<Dataset>();
+    private string _profileId = string.Empty;
+    private bool IsRerender { get; set; } = false; 
+    private bool IsEnableReportButton{ get; set; } = false; 
+
+    public class ReportDetail 
+    { 
+        public string Id { get; set; } 
+        public string Name{ get; set; } 
+    }
+    bool OnInputTriger = false;
+    bool OnCreateReportTriger = false;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        foreach (var rep in _report.Value)
+        {
+            identifiersUI.Add(rep.Id.ToString());
+            carouselComponents.Add(rep.Id.ToString(), new ElementReference());
+            ReportDetail repDet = new ReportDetail();
+            repDet.Id = rep.Id.ToString();
+            repDet.Name = rep.Name;
+            reportList.Add(repDet);
+
+        }
+        //Retrieve workspace ID from customer
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userNameIdentity = user?.Identity?.Name;
+        userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(userNameIdentity);
+
+        if (userNameGroupRolesModel.WorkspaceId == Guid.Empty)
+        {
+            showSpinner = false;
+            return;
+        }
+        IsEnableReportButton = true;
+        _customerTenantId = userNameGroupRolesModel.CustomerTenantId;
+        var customerTenant = await _userSecurityService.GetCustomerTenants(_customerTenantId);
+        if (customerTenant.ProfileId > 0)
+        {
+            var profile = _iAppOwnsDataMultiTenantDbService.GetProfileById((int)customerTenant.ProfileId);
+            _profileId = profile != null ? profile.ProfileId : null;
+        }
+
+    }
+
+    async Task OnChangeCarrosel(int x)
+    {
+        this.DropVal =  this.reportList[x].Id;
+    }
+
+    private void OnBtnClick()
+    {
+        this.OnCreateReportTriger = true;
+        this.Visibility = !this.Visibility ;
+        IsRerender = true;
+    }
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (OnCreateReportTriger)
+        {
+            OnCreateReportTriger = false;
+            return;
+        }
+        showSpinner = true;
+        if (!IsRerender)
+        {
+            await RenderReport(firstRender);
+        }
+        if (firstRender)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var   claims = user.Claims;
+            var   userEmail = claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase))?.Value;              
+            this.DropVal = this.reportList.Count > 0 ? this.reportList[0].Id: null;
+            if (id > 0)
+            {
+                UserVaultAppDetail = await _userVaultService.GetUserVaultAppDetails(id);
+
+            }
+        }
+
+
+        showSpinner = false;
+
+    }
+    public void Begin(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        Content = "Saving...";
+        CssClass = "e-hide-spinner e-info border-radius";
+    }
+
+    public async Task End(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        await   GenerateReport();
+        Content = "Saved....";
+        CssClass = "e-hide-spinner e-success border-radius";
+        await Task.Delay(1000);
+        Content = "Save....";
+        CssClass = "e-hide-spinner border-radius";
+
+    }
+    private void ValueChangeHandler(ChangeEventArgs<string, Dataset> args)
+    {
+        // Here, you can customize your code.
+        IsRerender = true;
+    }
+    private async void ValueChangeHandler(ChangeEventArgs<string, ReportDetail> args)
+    {
+        disableButton = args.Value != string.Empty;
+        selectedDataset = null;
+        if (args.Value != null)
+        {
+            AuthenticationResult authenticationResult = null;
+            authenticationResult = await DoAuthentication();
+            DatasetManager dsmanager ;
+            dsmanager = new DatasetManager(true, userNameGroupRolesModel.WorkspaceUrl,authenticationResult);
+            string reportData = reportList.Where(x => x.Id == DropVal).FirstOrDefault().Id;
+            var datasetfromTemplate = _client.Reports.GetReport(new Guid(_configuration.GetSection("PowerBiTemplate:WorkspaceId").Value),new Guid(reportData));
+            var datasetTemplate = _client.Datasets.GetDataset(new Guid(_configuration.GetSection("PowerBiTemplate:WorkspaceId").Value),datasetfromTemplate.DatasetId);
+            var dataSetList = _client.Datasets.GetDatasets(_workspaceId);
+
+            var templateTables = dsmanager.GetAllTablesFromTemplateWorkspace(datasetTemplate.Name);
+
+            int counter = templateTables.Tables.Where(x=> !x.Name.ToLower().Contains("datetabletemplate") && !x.Name.ToLower().Contains("localdatetable")) != null ? templateTables.Tables.Where(x=> !x.Name.ToLower().Contains("datetabletemplate") && !x.Name.ToLower().Contains("localdatetable")) .Count() : 0;
+            foreach (var item in dataSetList.Value)
+            {
+                var tablesFromCustomer = dsmanager.GetAllTablesFromCustomerWorkspace(item.Name);
+                if(tablesFromCustomer!=null)
+                    foreach (var ds in templateTables.Tables.Where(x=> !x.Name.ToLower().Contains("datetabletemplate") && !x.Name.ToLower().Contains("localdatetable")))
+                    {
+                        if(tablesFromCustomer.Tables.Where(x=> x.Name.ToLower().Trim() == ds.Name.Trim() &&
+                                                   (!x.Name.ToLower().Contains("datetabletemplate") && !x.Name.ToLower().Contains("localdatetable"))) !=null 
+                                                   && tablesFromCustomer.Tables.Where(x=> x.Name.Trim() == ds.Name.Trim() 
+                                                   && (!x.Name.ToLower().Contains("datetabletemplate") 
+                                                   && !x.Name.ToLower().Contains("localdatetable"))).Count() > 0 )
+                        {
+                            counter--;
+                            if (counter == 0)
+                            {
+                                var dsCustomer = _client.Datasets.GetDataset( _workspaceId, tablesFromCustomer.Database.ID); 
+                                datasetListCustomer.Add(dsCustomer);
+                            }
+                        }
+
+                    }
+
+
+
+            } 
+
+        }
+    }
+
+    private const string AuthorityFormat = "https://login.microsoftonline.com/94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0/v2.0";
+    private const string MSGraphScope = "https://analysis.windows.net/powerbi/api/.default";
+    private async Task<Microsoft.Identity.Client.AuthenticationResult> DoAuthentication()
+    {
+        IConfidentialClientApplication daemonClient;
+        daemonClient = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+            .WithAuthority(string.Format(AuthorityFormat, _configuration.GetSection("AzureAd:TenantId").Value))
+            .WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+            .Build();
+
+        AuthenticationResult authResult = await daemonClient.AcquireTokenForClient(new[] { MSGraphScope }).ExecuteAsync();
+        return authResult;
+    }
+
+    private async Task RenderReport(bool firstRender)
+    {
+        foreach (var report in _report.Value)
+        {
+            //  var clientReport = _client.Reports.GetReport(_workspaceId, Guid.Parse(_report.Value.First().Id.ToString()));
+            var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "View");
+            var tokenResponse = _client.Reports.GenerateTokenAsync(new Guid( _configuration.GetSection("PowerBiTemplate:WorkspaceId").Value), new Guid(report.Id.ToString()), generateTokenRequestParameters).Result;
+
+            _result.EmbedToken = tokenResponse;
+            _result.EmbedUrl = report.EmbedUrl;
+            _result.Id = report.Id.ToString();
+            JSRuntime.InvokeAsync<object>(
+                    "ShowMyPowerBI.showReport",
+                    carouselComponents[report.Id.ToString()],
+                    tokenResponse.Token,
+                    report.EmbedUrl,
+                     report.Id.ToString(),
+                    "true",
+                    "false"
+                    );
+        }
+        if (firstRender) { InvokeAsync(() => StateHasChanged()); };
+    }
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    public async Task GenerateReport()
+    {
+        if (string.IsNullOrEmpty(DropVal)) return;
+        try
+        {
+            var reportItem = _report.Value.Where(x => x.Id == new Guid(DropVal)).FirstOrDefault();
+
+            CloneReportRequest cloneReportRequest = new CloneReportRequest();
+            cloneReportRequest.Name = reportName;
+            cloneReportRequest.TargetWorkspaceId = _workspaceId;
+
+            var cloned = _client.Reports.CloneReportInGroup(new Guid(_configuration.GetSection("PowerBiTemplate:WorkspaceId").Value), reportItem.Id, cloneReportRequest);
+            var datasets = _client.Datasets.GetDataset(new Guid(_configuration.GetSection("PowerBiTemplate:WorkspaceId").Value), reportItem.DatasetId);
+            AuthenticationResult authenticationResult = null;
+            authenticationResult = await DoAuthentication();
+            DatasetManager manager = new DatasetManager(true, userNameGroupRolesModel.WorkspaceUrl, authenticationResult);
+            var newDataset = new Microsoft.AnalysisServices.Tabular.Database();
+            if (selectedDataset == null)
+            {
+                newDataset = await DatasetManager.CopyDatabaseToOtherWorkspace(datasets.Name, reportName);
+                //  _client.Datasets.TakeOver(_workspaceId, newDataset.ID.ToString());
+                SqlConnectionStringBuilder connectionStringBuilder =new SqlConnectionStringBuilder(_configuration.GetConnectionString("XeroConnection"));
+                if(id > 0 && !string.IsNullOrEmpty(UserVaultAppDetail.DatabaseName) && !string.IsNullOrEmpty(UserVaultAppDetail.ServerName) && !string.IsNullOrEmpty(UserVaultAppDetail.UserPassword) && !string.IsNullOrEmpty(UserVaultAppDetail.UserName))
+                    manager.PatchSqlDatasourceCredentials(_workspaceId, newDataset.ID,UserVaultAppDetail.ServerName,UserVaultAppDetail.DatabaseName, UserVaultAppDetail.UserName,UserVaultAppDetail.UserPassword,_profileId);
+                else
+                    manager.PatchSqlDatasourceCredentials(_workspaceId, newDataset.ID, AppSettings.sqlUserName, AppSettings.sqlUserPassword,_profileId, connectionStringBuilder.DataSource.ToString());
+            }
+            else
+            {
+                newDataset.ID = selectedDataset;
+
+            }
+
+            RebindReportRequest rebindReq = new RebindReportRequest();
+            rebindReq.DatasetId = newDataset.ID;
+            _client.Datasets.RefreshDataset(_workspaceId, newDataset.ID);
+            _client.Reports.RebindReport(_workspaceId, cloned.Id, rebindReq);
+            _client.Datasets.TakeOver(_workspaceId, newDataset.ID);
+
+            var customerUserRole = new CustomerUserRole
+            {
+                CustomerTernantId = _customerTenantId,
+                Description = $"View {reportName} Report",
+                UserRoleName =reportName,
+                IsActive = true,
+            };
+
+            string reportRoleCode = await _userSecurityService.InsertCustomerUserRoleByName(customerUserRole);
+
+            string newTitle = await _reportDashboardService.UpsertReportInDashboard(reportName,cloned.Id, reportRoleCode);
+
+
+            this.Visibility= !this.Visibility;
+            reportName = null;
+            selectedDataset = null;
+            var options = new ModalOptions { UseCustomLayout = true };
+
+            var modalParams = new ModalParameters();
+
+            MessageDialog.OpenDialog(AlertStatus.Success,string.Format("Report for '{0}' successfully created.", cloned.Name));
+
+        } catch (Exception ex) {
+
+         MessageDialog.OpenDialog(AlertStatus.Danger,ex.Message);
+        }
+        //}
+        //catch (Exception ex) { }
+
+    }
+    private void showAlertMessage(string alertType, string message, string title)
+    {
+            MessageDialog.OpenDialog(alertType,message);
+    }
+
+}
+<style>
+    .control-container {
+        background-color: #adb5bd;
+        height: 70vh;
+        margin: 0 auto;
+        width: 100%;
+    }
+
+    .e-carousel .slide-content {
+        align-items: center;
+        display: flex;
+        font-size: 1.25rem;
+        height: 100%;
+        justify-content: center;
+    }
+    .floating-botton{
+        position: absolute;
+        bottom: 0;
+        right: 0px;
+        z-index: 3000;
+    }
+    .floating-container{
+        position: absolute;
+        width: 100%;
+        bottom: 10%;
+        left: 0px;
+        z-index: 3000;
+        background-color:rgba(135,206,235, 1);
+
+
+    }
+    .e-ddl.e-input-group.e-control-wrapper .e-input {
+    font-size: 20px;
+    font-family: emoji;
+    color: #ab3243;
+    background: #32a5ab;
+}
+.e-dropdownbase .e-list-item.e-item-focus, .e-dropdownbase .e-list-item.e-active, .e-dropdownbase .e-list-item.e-active.e-hover, .e-dropdownbase .e-list-item.e-hover {
+    background-color: #1f9c99;
+    color: #2319b8;
+}
+    .e-carousel .e-carousel-navigators .e-previous .e-btn:not(:disabled), .e-carousel .e-carousel-navigators .e-next .e-btn:not(:disabled), .e-carousel .e-carousel-navigators .e-play-pause .e-btn:not(:disabled) {
+    background-color: #adaaaa !important;
+}
+   .e-dlg-center-center {
+    position: fixed !important;
+}
+</style>

@@ -1,0 +1,1944 @@
+﻿
+@page "/reports"
+@page "/reports/{_paramworkspaceId}/{_paramreportId}"
+@page "/reports/{_paramworkspaceId}/{_paramreportId}/{_paramEditable}/{_isdashboard}"
+
+@using System.Net.Http
+@using System.Threading.Tasks
+@using BlazorDataAnalytics.Data
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services.BookMarkService
+@using BlazorDataAnalytics.Services.UserService
+@using Microsoft.Identity.Client
+@using Microsoft.PowerBI.Api
+@using Microsoft.PowerBI.Api.Models
+@using Microsoft.Rest
+@using Newtonsoft.Json.Linq
+@using Microsoft.Extensions.Configuration
+@using Syncfusion.Blazor.Buttons
+@using Persistence.Config.Entities
+@using System.Collections.ObjectModel
+@using Syncfusion.Blazor.Lists
+@using Syncfusion.Blazor.Inputs
+@using Persistence.Config.Entities
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Net
+@using Syncfusion.Blazor.Navigations
+@using Syncfusion.Blazor.SplitButtons
+@using Newtonsoft;
+@using System.Text.RegularExpressions
+@using Newtonsoft.Json;
+@using System.IdentityModel.Tokens.Jwt
+@using BlazorDataAnalytics.Services.ReportThemesService
+
+@inject BlazorDataAnalytics.Data.FilterState filterstate
+@inject IJSRuntime JSRuntime
+@inject IConfiguration _configuration
+@inject NavigationManager UriHelper
+@inject IBookmarkService _bookmarkService
+@inject IUserService _userService
+@inject IReportTheme _reportTheme
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject BlazorDataAnalytics.Services.ApiClientService.IApiClientService _apiClientService
+@inject BlazorDataAnalytics.Services.ReportDashboardService.IReportDashboardService _reportDashboardService
+@inject BlazorDataAnalytics.Services.UserSecurityService.IUserSecurityService _userSecurityService
+
+
+@*<div class="row">
+	<div class="col-6">
+		<SfDropDownList TValue="Guid" TItem="Group" Placeholder="Aged Care Demos" DataSource="@_group">
+			<DropDownListEvents TItem="Group" TValue="Guid" ValueChange="@WorkspaceChangeHandler"></DropDownListEvents>
+			<DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+		</SfDropDownList>
+	</div>
+	<div class="col-6">
+		<SfDropDownList TValue="Guid" TItem="Report" Placeholder="Select a Report" DataSource="@_reports">
+			<DropDownListEvents TItem="Report" TValue="Guid" ValueChange="@ReportChangeHandler"></DropDownListEvents>
+			<DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+		</SfDropDownList>
+	</div>
+</div>
+<hr />
+<br />
+*@
+<BlazorDataAnalytics.Dialogs.MessageBoxDialog @ref="MessageBoxDialog" />
+             <div class="row col-lg-8 filter-bar" >            
+                <div class="col-lg-6">
+                   <h2 style="text-shadow: 1px 1px 5px white;text-align:center;">@reportName</h2>
+                </div>
+                <div class="col-lg-2">
+                     <SfDropDownList TValue="String" TItem="BookmarkModel" Placeholder="Bookmarks" DataSource="@bookmarkModels">
+                        <DropDownListEvents TItem="BookmarkModel" TValue="String" ValueChange="@BookmarkChangeHandler"></DropDownListEvents>
+                        <DropDownListFieldSettings Value="Id" Text="Title"></DropDownListFieldSettings>
+                    </SfDropDownList>  
+                </div> 
+            </div>
+<div class="row">
+
+	<div class="col-12">
+		<div class="row">
+		  <br/>
+		</div>
+		<div @ref="@PowerBIElement" id="powerbi" style="width:100%;max-width: 100%;height:500px;margin-top: -1.5em;" />
+	</div>
+<div id="target">
+		<div>
+	@*   <button class="e-btn" @onclick="@OnBtnClick">Open</button>*@
+		</div>
+			<SfDialog Target="#target" Width="300px" ShowCloseIcon="true" @bind-Visible="Visibility" AllowPrerender="true" IsModal="true">
+				<DialogTemplates>
+					<Header> Capture Views </Header>
+					<Content> 
+						<div class="row">
+							<SfTextBox Placeholder="Enter View Name" Input="OnInput2" CssClass="@CssClass2" @bind-Value="viewName"></SfTextBox>
+							<br/> <br/>
+							  <SfProgressButton id="SaveViews" Content="@Content" EnableProgress="true" CssClass="@CssClass" Duration="3000" IconCss="e-icons e-save e-small camera" Disabled="!enableButton">
+									<ProgressButtonEvents OnBegin="Begin" OnEnd="End" ></ProgressButtonEvents>
+								</SfProgressButton> 
+						</div>
+					</Content>
+				</DialogTemplates>
+			</SfDialog>
+		</div>
+
+	<SfSidebar @ref="rightSidebarInstance" Width="250px" Position=SidebarPosition.Right IsOpen="@filterstate.IsShowHideFilter">
+	<ChildContent>
+	<div class="col" style="padding-top:40%">
+
+		  <SfAccordion ExpandMode="ExpandMode.Multiple">
+			<AccordionItems>
+				<AccordionItem Header="Customize"  Expanded="true">
+					<ContentTemplate>
+						<ul>
+							<li><SfButton IconCss="e-icons e-full-screen e-small"  CssClass="e-info" style="font-size:10px !important; min-width: 100%;" Content="Report Full Screen" OnClick="@(async (e) => await ChangeReport())"></SfButton>
+							</li>
+							<li><SfButton IconCss="e-icons e-upload-1 e-small" CssClass="e-info" style="font-size:10px !important; min-width: 100%;" Content="Upload Card Picture" OnClick="@(async (e) => await UploadCardPicture())"></SfButton>      
+							</li>
+							  <li><SfButton IconCss="e-icons e-edit e-small" CssClass="e-info" style="font-size:10px !important; min-width: 100%;" Content="Rename  Report.." OnClick="@(async (e) => await OnBtnClick2())"></SfButton>      
+							</li>
+									@if (IsAdminUser)
+									{
+										<li><SfButton IconCss="e-icons e-edit e-small" CssClass="e-info" style="font-size:10px !important; min-width: 100%;" Content="Edit  Report.." OnClick="@(async (e) => await OnBtnEditReportClick())"></SfButton>      
+										</li>
+							        }
+							 <li><SfButton IconCss="e-icons e-settings e-small" CssClass="e-info" style="font-size:10px !important; min-width: 100%;" Content="Choose Theme" OnClick="@(async (e) => await ChooseTheme())"></SfButton>      
+							</li>
+						</ul>
+					</ContentTemplate>
+				</AccordionItem>
+				 <AccordionItem Header="Capture Views"  Expanded="true">
+					<ContentTemplate>
+						<ul>
+							<li>
+							 <SfDropDownButton Content="Saved Views" CssClass="e-info border-radius">
+								<DropDownButtonEvents  ItemSelected="ItemSelected" >
+								  </DropDownButtonEvents>
+							<DropDownMenuItems>
+								@foreach(var item in _bookmarkList)
+								{
+									 <DropDownMenuItem Id="@item.Id.ToString()" Text="@item.Title" ></DropDownMenuItem>
+								}
+							</DropDownMenuItems>
+					   </SfDropDownButton>
+							</li>
+							<li>
+								<SfButton IconCss="e-icons e-save e-small e-btn-icon e-icon-left" style="font-size:10px !important;min-width: 100%;" CssClass="e-info" Content="Capture Views" OnClick="@OnBtnClick"></SfButton>
+							</li>
+						</ul>
+					</ContentTemplate>
+				</AccordionItem>
+				<AccordionItem Header="Tags" Expanded="true" CssClass="">
+					<ContentTemplate>
+						<ul>
+							<li>   
+								<div class="flex">
+									<SfTextBox Placeholder='Enter Tags'  @bind-Value='@_Tag'></SfTextBox>
+									<SfButton IconCss="e-icons e-circle-add e-small" CssClass="e-info"  OnClick="@(async (e) => await AddItem())"></SfButton>
+								</div>
+								<div class="flex">
+									<div class="margin">
+										<SfListView ID="sample-list-flat" DataSource="@DataSource">
+											<ListViewFieldSettings TValue="ListDataModel" Id="Id" Text="TagName"></ListViewFieldSettings>
+											<ListViewTemplates TValue="ListDataModel">
+												<Template>
+													@{
+														ListDataModel item = context as ListDataModel;
+																																<div class="text-content">
+																																	@item.TagName
+																																	<span class="delete-icon" @onclick="@(() => { OnDelete(item); })"></span>
+																																</div>
+													}
+												</Template>
+											</ListViewTemplates>
+										</SfListView>
+									</div>
+								</div>
+								</li>
+						</ul>
+					</ContentTemplate>
+				</AccordionItem>
+				<AccordionItem Header="Export Report"  Expanded="true">
+					<ContentTemplate>
+						<ul>
+							<li>
+								<div style="min-width:100%;border-style: solid;border-color: #427fed;border-radius: 10px;">
+							   <div style="height:5px; width:@(_exportStatus + "%"); background-color: #427fed; border-radius:10px;"></div>
+							   </div>
+						   </li>
+							<li>
+								<SfButton IconCss="e-icons e-export-pdf e-small pdf" style="font-size:10px !important; min-width: 100%;" CssClass="e-info" Content="PDF" OnClick="@(async (e) => await ExportReport(FileFormat.PDF))"></SfButton>
+							</li>
+							<li> <SfButton IconCss="e-icons e-print-layout e-small pptx" style="font-size:10px !important;min-width: 100%;" CssClass="e-info" Content="PPTX" OnClick="@(async (e) => await ExportReport(FileFormat.PPTX))"></SfButton>
+							 </li>
+						</ul>
+					</ContentTemplate>
+				</AccordionItem>
+			</AccordionItems>
+		</SfAccordion>
+	</div>
+	</ChildContent>
+	</SfSidebar>
+ 
+
+
+	<div class="col-lg-12">
+		<div class="placeBottom" style="place-content: center">
+			<div style="height:4px; width:@_exportStatus %; background-color: rgba(3, 120, 213, 0.73);"></div>
+			   </div>
+	 </div>
+</div>
+		<SfDialog Target="#target" Width="500px" ShowCloseIcon="true" @bind-Visible="Visibility2" AllowPrerender="true" IsModal="true">
+			<DialogTemplates>
+				<Header> Rename Report </Header>
+				<Content>
+					<div class="row">
+						<div class="mt-2">
+							<SfTextBox Placeholder="Enter Report Name" FloatLabelType="FloatLabelType.Auto" Input="OnInput" CssClass="@CssClass" @bind-Value="@reportName"></SfTextBox>
+						</div>
+						<div class="mt-5">
+							<SfProgressButton Content="@Content" EnableProgress="true" CssClass="@CssClass" Duration="1000" IconCss="e-icons e-save e-small camera" Disabled="!enableButton2">
+								<ProgressButtonEvents OnBegin="Begin" OnEnd="End2"></ProgressButtonEvents>
+							</SfProgressButton>
+						</div>
+					</div>
+				</Content>
+			</DialogTemplates>
+		</SfDialog>
+		 <SfDialog Target="#target" Width="50vw" Height="80vh" ShowCloseIcon="true" @bind-Visible="IsShowTheme" AllowPrerender="true" IsModal="true">
+			<DialogTemplates>
+				<Header> Available Themes </Header>
+				<Content>
+					<div class="col-xs-12 col-sm-12 col-lg-12 col-md-12 e-scroll-wrap">                      
+					<div class="control-section">
+						<div class="row" style="text-align:left; max-height: 45vh;overflow-y: auto;">
+						   @foreach (var item in palleteList)
+						   {
+							   	<div class="row">
+								 <div class="col-lg-2">
+								   <SfRadioButton Label="@item.name" Name="pallete" Value="@item.name" Checked="@checkedValue" @onchange="onChange"></SfRadioButton>
+							     </div>
+								   <div class="col-lg-10">
+								    <SfColorPicker Value="@scrollablePaletteValue" Mode="Syncfusion.Blazor.Inputs.ColorPickerMode.Palette" CssClass="scroll-palette" ModeSwitcher="false" Inline="true" ShowButtons="false" Columns="8" PresetColors="@item.dataColorsList" ValueChange="scrollablePaletteChange" Disabled="true"></SfColorPicker>
+                                </div>
+							 </div>						   
+						   }
+						<div class="col-lg-3">
+							  <SfButton CssClass="e-info" OnClick="@(async (e) => await setAsTheme())">Set as Theme</SfButton>
+						 </div>
+					   </div>
+					  	  <br/><br/>
+					   <div class="col-lg-12">
+					   <div class="accordion" id="accordionExample">
+					  <div class="accordion-item">
+						<h2 class="accordion-header" id="headingOne">
+						  <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+							Customize Theme
+						  </button>
+						</h2>
+						<div id="collapseOne" class="accordion-collapse collapse show" aria-labelledby="headingOne" data-bs-parent="#accordionExample">
+						  <div class="accordion-body">
+							<div class="container">
+								
+                              <div class="row" style="text-align:left">
+								           <div class="col-lg-2">
+											    Data Colors
+											   </div>
+										    <div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[0]" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="@palletItem.dataColors[1]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											 <div class="col-lg-1">
+												  <SfColorPicker @bind-Value="palletItem.dataColors[2]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[3]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[4]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[5]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[6]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+											<div class="col-lg-1">
+												 <SfColorPicker @bind-Value="palletItem.dataColors[7]" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+											</div>
+
+								  </div>
+								  <br/><br/>
+								     <div class="row">
+										 <div class="col-lg-2">
+											 Foreground
+										 </div>
+										  <div class="col-lg-1">
+											 <SfColorPicker @bind-Value="palletItem.foreground" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+										 </div>
+									 </div>
+									 <br/>
+									  <div class="row">
+										 <div class="col-lg-2">
+											 Background
+										 </div>
+										 <br/><br/>
+										  <div class="col-lg-1">
+											 <SfColorPicker @bind-Value="palletItem.background" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+										 </div>
+									 </div>
+									 <br/>
+									  <div class="row">
+										 <div class="col-lg-2">
+											 Table Accent
+										 </div>
+										  <div class="col-lg-1">
+											 <SfColorPicker @bind-Value="palletItem.tableAccent" Mode="ColorPickerMode.Picker" ModeSwitcher="false" ShowButtons="true" Disabled="false"></SfColorPicker>
+										 </div>
+									 </div>
+									<br/><br/>
+									 <div class="row">
+										 <div class="col-lg-2">
+											Name
+										 </div>
+										  <div class="col-lg-8">
+											  <SfTextBox @bind-Value="palletItem.name" Placeholder="Name of Theme"></SfTextBox>											
+										 </div>
+									 </div>
+									 <div class="row">
+										 <div class="col-lg-2">
+											Set as Default Theme
+										 </div>
+										  <div class="col-lg-1">
+											  <SfCheckBox  @bind-Checked="@palletItem.IsDefault" ></SfCheckBox>											
+										 </div>
+									 </div>
+									<br/><br/>
+									   <div class="row" style="text-align:right;">
+										    <div class="col-lg-9">
+									  <SfButton CssClass="e-info" OnClick="@(async (e) => await ApplyTheme())">Apply Theme</SfButton>
+									   </div>
+									  	<div class="col-lg-3">
+									  <SfButton  CssClass="e-info" OnClick="@(async (e) => await SaveTheme())">Save</SfButton>
+									   </div>
+							         </div>
+								  </div>
+						  </div>
+						</div>
+					  </div>
+					</div>
+					</div>
+					</div>
+					</div>
+				</Content>
+			</DialogTemplates>
+		</SfDialog>
+<BlazorDataAnalytics.Dialogs.UploadCardPictureDialog @ref="UploadCardPictureDialog" />
+@**@
+@code {
+	BlazorDataAnalytics.Dialogs.MessageBoxDialog MessageBoxDialog;
+	BlazorDataAnalytics.Dialogs.UploadCardPictureDialog UploadCardPictureDialog;
+	private ElementReference PowerBIElement;
+	private ClaimsPrincipal user;
+	private Dashboard _dashBoard;
+	private PowerBIEmbedConfig _result;
+	private Reports _report;
+	private PowerBIClient _client;
+	private bool enableButton { get; set; } = false;
+	private bool enableButton2 { get; set; } = false;
+	private string viewName { get; set; }
+	private string reportName { get; set; }
+	private string CssClass2 { get; set; }
+	private bool Visibility { get; set; } = false;
+	private bool Visibility2 { get; set; } = false;
+	private bool IsShowTheme { get; set; } = false;
+	private string scrollablePaletteValue = "#ffffff";
+	private IEnumerable<Claim> claims = Enumerable.Empty<Claim>();
+	private UserTrack userTrack = new UserTrack();
+	private string[] tagArguments { get;  set; }
+	private List<ReportModel>? reportModels = new List<ReportModel>();
+	private ReportInDashboardModel reportDashboard = new ReportInDashboardModel();
+	private List<ReportModel>? reportFilterModels = new List<ReportModel>();
+	private List<TagModel>? tagModels = new List<TagModel>();
+	private string checkedValue = "Divergent";
+
+	private IList<Microsoft.PowerBI.Api.Models.Group>? _group;
+	private IList<Report>? _reports;
+	private Guid _workspaceId, _reportId;
+	private Guid _dashBoardId;
+	private string previousID;
+	private string _authMessage;
+	private string _userName;
+	private int? _exportStatus= 0;
+	private bool isChecked = true;
+	private List<BookmarkModel> bookmarkModels = new List<BookmarkModel>();
+	SfSidebar rightSidebarInstance;
+	[CascadingParameter]
+	public IModalService Modal { get; set; }
+
+	[Parameter]
+	public string _paramworkspaceId { get; set; }
+
+	[Parameter]
+	public string _paramreportId { get; set; }
+
+	[Parameter]
+	public string _paramEditable { get; set; }
+
+	[Parameter]
+	public string _isdashboard { get; set; }
+
+	private List<BookmarkModel> _bookmarkList = new List<BookmarkModel>(); 
+	private string browser { get; set; }
+	protected string userName { get; set; }
+	private int customerTenantId { get; set; }
+	public string Content = "Save";
+	public string CssClass = "e-hide-spinner";
+	public string _Tag { get; set; }
+	public class ThemePallete {
+		public int ID{ get; set; }
+		public bool IsDefault { get; set; } = false;
+		public string name { get; set; }
+		public string[] dataColors = new string[8];
+		public Dictionary<string, string[]> dataColorsList = new Dictionary<string, string[]>();
+		public string foreground{ get; set; }
+		public string background{ get; set; }
+		public string tableAccent{ get; set; }
+	}
+	public class ThemePalleteJsonRequest {
+		public string name { get; set; }
+		public string[] dataColors = new string[8];
+		public string foreground{ get; set; }
+		public string background{ get; set; }
+		public string tableAccent{ get; set; }
+	}
+	ObservableCollection<ListDataModel> DataSource = new ObservableCollection<ListDataModel>();
+	private List<ThemePallete> palleteList = new List<ThemePallete>();
+	ThemePallete palletItem = new ThemePallete();
+
+
+	void OnDelete(ListDataModel listDataModel)
+	{
+		DataSource.RemoveAt(DataSource.ToList<ListDataModel>().FindIndex(e => e.TagName == listDataModel.TagName));
+
+		var reportDashboard = _reportDashboardService.GetReportsInDashboardByPowerBiId(Guid.Parse(_paramreportId), customerTenantId).Result;
+		userTrack.ReportName = reportDashboard.Title;
+
+		string tagInline = @"";
+		int countObj = 1;
+
+		foreach(var curModel in DataSource){
+
+			if (countObj == 1)
+			{
+				tagInline = curModel.TagName;
+			}
+			else
+			{
+				tagInline = tagInline + "," + curModel.TagName;
+			}
+
+			countObj++;
+
+		}
+
+		using (var db = new DataAnalyticsDBContext())
+		{
+			var dbBoard = new ReportInDashboard();
+
+			dbBoard = db.ReportInDashboards.Where(c => c.Title == userTrack.ReportName).FirstOrDefault();
+
+			dbBoard.Tags = tagInline;
+			db.SaveChanges();
+
+		}
+
+
+	}
+	private void OnBtnClick()
+	{
+		this.Visibility = !this.Visibility ;
+		StateHasChanged();
+	}
+	private async Task OnBtnClick2()
+	{
+		this.Visibility2 = !this.Visibility2 ;
+		StateHasChanged();
+	}
+	private async Task OnBtnEditReportClick()
+	{
+		IsEditMode = true;
+		this.RenderReport();
+	}
+	private async Task ChooseTheme()
+	{
+		this.IsShowTheme = !this.IsShowTheme ;
+		StateHasChanged();
+	}
+	public void OnInput(InputEventArgs args)
+	{
+		if (string.IsNullOrEmpty(args.Value)){
+			CssClass = "e-error";
+		}
+		else {
+			CssClass2 = "e-success";
+			enableButton2 = !string.IsNullOrEmpty(args.Value) ;
+		}
+		this.StateHasChanged();
+	}
+	public void OnInput2(InputEventArgs args)
+	{
+		if (string.IsNullOrEmpty(args.Value)){
+			CssClass = "e-error";
+		}
+		else {
+			CssClass2 = "e-success";
+			viewName = args.Value;
+			enableButton = !string.IsNullOrEmpty(viewName) ;
+		}
+		this.StateHasChanged();
+	}
+	public void Begin(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+	{
+		Content = "Saving.......";
+		CssClass = "e-hide-spinner e-info border-radius";
+	}
+	public async Task End(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+	{
+		await CaptureViews();
+		Content = "Saved";
+		CssClass = "e-hide-spinner e-success border-radius";
+		await Task.Delay(1000);
+		Content = "Save";
+		CssClass = "e-hide-spinner border-radius";
+
+	}
+	public async Task End2(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+	{
+		if(reportDashboard.Title== reportName)
+		{
+			showAlertMessage(AlertStatus.Danger,"Report name must not be the same with current name.","Validation Error!");
+			return;
+
+		}
+		await  RenameReport();
+		Content = "Saved";
+		CssClass = "e-hide-spinner e-success border-radius";
+		Content = "Save";
+		CssClass = "e-hide-spinner border-radius";
+
+	}
+	private async Task ApplyTheme()
+	{
+		try 
+		{
+			if(string.IsNullOrEmpty(palletItem.name)){
+				showAlertMessage(AlertStatus.Warning, "Theme name is required!","Warning!");
+				return;
+			}
+			var reg = "\"([^\"]+)\":";
+			ThemePalleteJsonRequest obj= new ThemePalleteJsonRequest();
+
+			obj.name = palletItem.name;
+			obj.dataColors = palletItem.dataColors;
+			obj.foreground = palletItem.foreground.Substring(0, 7);
+			obj.background = palletItem.background.Substring(0, 7);;
+			obj.tableAccent = palletItem.tableAccent.Substring(0, 7);;
+
+			for(int i=0; i < obj.dataColors.Length;i++){
+				obj.dataColors[i] = obj.dataColors[i].Substring(0,7);
+			}
+
+			var jsonText =Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+
+			await Interop.ApplyTheme(JSRuntime, jsonText);
+
+			StateHasChanged();
+		} 
+		catch (Exception ex) { }
+	}
+	public async Task setAsTheme()
+	{
+		try
+		{
+			var obj = palleteList.Where(x => x.name == checkedValue).FirstOrDefault();
+			if (obj != null)
+			{
+				bool isExisting = await _reportTheme.CheckExist(customerTenantId, reportDashboard.ReportDbId, obj.name);
+				if (isExisting)
+				{
+					await _reportTheme.SetAsDefaultTheme(customerTenantId, reportDashboard.ReportDbId, obj.name);
+				}
+				else
+				{
+					ReportThemeModel newTheme = new ReportThemeModel();
+					newTheme.CreatedDate = DateTime.Now;
+					newTheme.CustomerTenantId = _customerTenantId;
+					newTheme.ReportDBID = reportDashboard.ReportDbId;
+
+					obj.foreground = obj.foreground.Substring(0, 7);
+					obj.background = obj.background.Substring(0, 7); ;
+					obj.tableAccent = obj.tableAccent.Substring(0, 7); ;
+
+					for (int i = 0; i < obj.dataColors.Length; i++)
+					{
+						obj.dataColors[i] = obj.dataColors[i].Substring(0, 7);
+					}
+
+					newTheme.Theme = JsonConvert.SerializeObject(obj);
+					newTheme.CreatorUserName = userNameGroupRolesModel.UserName;
+					newTheme.ThemeName = obj.name;
+					newTheme.IsDefaultTheme = true;
+
+					var response = await _reportTheme.CreateOrUpdateReportTheme(newTheme);
+					await _reportTheme.SetAsDefaultTheme(customerTenantId, reportDashboard.ReportDbId, obj.name);
+				}
+				showAlertMessage(AlertStatus.Success, "Theme has been applied!", "Success!");
+
+			}
+		}
+		catch (Exception ex) { }
+	}
+	public async Task SaveTheme()
+	{
+		try
+		{
+			var isExisting = await _reportTheme.CheckExist(customerTenantId, reportDashboard.ReportDbId, palletItem.name);
+			if (isExisting)
+			{
+				showAlertMessage(AlertStatus.Warning, "Theme with corresponding name already exist! Please try another name.", "Warning!");
+				return;
+			}
+			ReportThemeModel newTheme = new ReportThemeModel();
+			newTheme.CreatedDate = DateTime.Now;
+			newTheme.CustomerTenantId = _customerTenantId;
+			newTheme.ReportDBID = reportDashboard.ReportDbId;
+
+			palletItem.foreground = palletItem.foreground.Substring(0, 7);
+			palletItem.background = palletItem.background.Substring(0, 7); ;
+			palletItem.tableAccent = palletItem.tableAccent.Substring(0, 7); ;
+
+			for (int i = 0; i < palletItem.dataColors.Length; i++)
+			{
+				palletItem.dataColors[i] = palletItem.dataColors[i].Substring(0, 7);
+			}
+
+			newTheme.Theme = JsonConvert.SerializeObject(palletItem);
+			newTheme.CreatorUserName = userNameGroupRolesModel.UserName;
+			newTheme.ThemeName = palletItem.name;
+			newTheme.IsDefaultTheme = palletItem.IsDefault;
+
+			await _reportTheme.CreateOrUpdateReportTheme(newTheme);
+			if (palletItem.IsDefault)
+			{
+				await _reportTheme.SetAsDefaultTheme(customerTenantId, reportDashboard.ReportDbId, palletItem.name);
+			}
+
+			showAlertMessage(AlertStatus.Success, "New theme added successfully", "Success!");
+			await retrieveThemes();
+			palletItem = new ThemePallete();
+			palletItem.dataColors = new string[] { "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff" };
+			palletItem.background="#ffffffff";
+			palletItem.foreground="#ffffffff";
+			palletItem.tableAccent = "#ffffffff";
+		}
+		catch (Exception ex) { }
+	}
+	private void onClick(Microsoft.AspNetCore.Components.Web.MouseEventArgs args)
+	{
+		//onclick Event triggered
+	}
+	private void scrollablePaletteChange(ColorPickerEventArgs args)
+	{
+		ThemePallete pallete = new ThemePallete();
+		pallete.name = args.Name;
+
+
+	}
+	private async void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+	{
+		//onChange Event triggered
+		var reg = "\"([^\"]+)\":";
+		checkedValue = args.Value.ToString();
+		foreach(var item in palleteList)
+		{
+			if (item.name== checkedValue)
+				item.IsDefault = true;
+			else
+				item.IsDefault = false;
+		}
+		var jsonText =Newtonsoft.Json.JsonConvert.SerializeObject(palleteList.Where(x=> x.name.ToLower().Trim()== checkedValue.ToString().ToLower().Trim()).Select(x=>
+				new ThemePalleteJsonRequest{
+		  name = x.name,
+		  dataColors = x.dataColors,
+		  foreground = x.foreground,
+		  background = x.background,
+		  tableAccent = x.tableAccent
+		}).FirstOrDefault());
+		try {
+			await Interop.ApplyTheme(JSRuntime, jsonText);
+		} catch (Exception ex) { }
+		StateHasChanged();
+	}
+	public async Task ValueChangeHandler(ChangedEventArgs args) 
+	{
+
+		reportModels = new List<ReportModel>();
+		List<ReportModel> newReportFilterModels = new List<ReportModel>();
+
+		if(tagArguments != null)
+		{
+			if(tagArguments.Any())
+			{
+				foreach (var tagArg in tagArguments)
+				{
+					if (string.IsNullOrEmpty(reportName))
+					{
+						newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(tagArg)).ToList();
+						if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+						{
+							reportModels.AddRange(newReportFilterModels);                       
+						}
+					}
+					else
+					{
+						newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(tagArg) && x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+						if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+						{
+							reportModels.AddRange(newReportFilterModels);                       
+						}
+					}
+				}
+			}
+			else
+			{
+				reportModels = reportFilterModels.Where(x => x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+			}
+
+		}     
+		else
+		{
+			if (!string.IsNullOrEmpty(reportName))
+			{
+				reportModels = reportFilterModels.Where(x => x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();;
+			}
+			else
+			{
+				reportModels = reportFilterModels;  
+			}
+		}
+
+	}
+	public async Task TagValueChangeHandler(MultiSelectChangeEventArgs<string[]> args) 
+	{
+
+		reportModels = new List<ReportModel>();
+		List<ReportModel> newReportFilterModels = new List<ReportModel>();
+
+		if (args.Value != null)
+		{
+			tagArguments = args.Value;
+			foreach (var arg in args.Value)
+			{
+				if (string.IsNullOrEmpty(reportName))
+				{
+					newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(arg)).ToList();
+					if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+					{
+						reportModels.AddRange(newReportFilterModels);                       
+					}
+				}
+				else
+				{
+					newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(arg) && x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+					if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+					{
+						reportModels.AddRange(newReportFilterModels);                       
+					}
+				}
+			}
+		}
+		else
+		{
+			tagArguments =  new string[] {};
+			reportModels = reportFilterModels;
+		}
+
+	}
+	private async Task AddItem()
+	{
+		var random = new Random();
+		DataSource.Add(new ListDataModel
+		{
+			Id = random.Next(100, 300).ToString(),
+			TagName = _Tag
+		});
+
+		var reportDashboard = _reportDashboardService.GetReportsInDashboardByPowerBiId(Guid.Parse(_paramreportId), customerTenantId).Result;
+		userTrack.ReportName = reportDashboard.Title;
+
+		string tagInline = @"";
+		int countObj = 1;
+
+		foreach(var curModel in DataSource){
+
+			if (countObj == 1)
+			{
+				tagInline = curModel.TagName;
+			}
+			else
+			{
+				tagInline = tagInline + "," + curModel.TagName;
+			}
+
+			countObj++;
+
+		}
+
+		using (var db = new DataAnalyticsDBContext())
+		{
+			var dbBoard = new ReportInDashboard();
+
+			dbBoard = db.ReportInDashboards.Where(c => c.Title == userTrack.ReportName).FirstOrDefault();
+
+			dbBoard.Tags = tagInline;
+			db.SaveChanges();
+
+		}
+
+		_Tag = string.Empty;
+	}
+
+	public class ListDataModel
+	{
+		public string Id { get; set; }
+		public string TagName { get; set; }
+	}
+
+	async void LocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		//RenderReport();
+	}
+
+	async void RenderReport()
+	{
+		_result = new PowerBIEmbedConfig();
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		var groups = await _client.Groups.GetGroupsAsync();
+		_group = groups.Value;
+
+
+		if (!String.IsNullOrEmpty(_paramworkspaceId ) && !String.IsNullOrEmpty(_paramreportId))
+		{
+			var clientReport = _client.Reports.GetReport(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+			_workspaceId = Guid.Parse(_paramworkspaceId);
+			_reportId = Guid.Parse(_paramreportId);
+
+			await ReportChange(clientReport,"false");
+
+		}
+
+		StateHasChanged();
+	}
+	private string userNameIdentity { get; set; }
+	private UserNameGroupRolesModel userNameGroupRolesModel = new UserNameGroupRolesModel();
+	private int _customerTenantId;
+	private bool IsEditMode { get; set; } = false;
+	private bool IsAdminUser{ get; set; } = false;
+	private async Task RenderBookmarks()
+	{   
+
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+		userNameIdentity = user?.Identity?.Name;
+		userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(userNameIdentity); 
+
+		if(userNameGroupRolesModel.WorkspaceId == Guid.Empty)
+		{
+			return;
+		}
+
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+		_result = new PowerBIEmbedConfig();
+		_reports = new List<Report>();
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		_customerTenantId = userNameGroupRolesModel.CustomerTenantId;
+
+
+		var reportInDashboards = await _reportDashboardService.GetReportsInDashboardByTenantId(_customerTenantId, await GetCustomerTenantSid());
+
+		bookmarkModels = await _reportDashboardService.GetBookmarksInDashboardByTenantId(_customerTenantId, userNameIdentity);
+
+		if((!userNameGroupRolesModel.IsAdmin || !userNameGroupRolesModel.ViewAllReport) && reportInDashboards != null)
+		{
+			bookmarkModels = bookmarkModels.Where(r => userNameGroupRolesModel.CustomerUserRoles.Any(a => a.Code == 
+													reportInDashboards?.FirstOrDefault(x => x.ReportDbId == r.ReportDbid).UserRoleCode)).ToList();
+		}
+	}
+	public async Task<string> GetCustomerTenantSid()
+	{
+		string resource = "https://management.azure.com";
+		var clientId = _configuration.GetSection("AzureAd:ClientId").Value;
+		var secret = _configuration.GetSection("AzureAd:ClientSecret").Value;
+		var oauthUrl = _configuration.GetSection("AzureAd:Instance").Value + _configuration.GetSection("workSpaceId").Value + "/oauth2/token";
+		var content = new FormUrlEncodedContent(new Dictionary <string, string> {
+                                      { "client_id", clientId},
+                                      { "client_secret", secret},
+                                      { "grant_type", "client_credentials" },
+                                      { "resource", resource},
+                                      { "scope", "user_impersonation"}
+                                    });
+
+		var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(oauthUrl))
+                            {
+                                Content = content
+                            };
+
+		var _httpClient = new HttpClient();
+		using (var response = await _httpClient.SendAsync(httpRequestMessage))
+		{
+			if (response.IsSuccessStatusCode)
+			{
+				var responseStream = await response.Content.ReadAsStringAsync();
+
+				AnalyticsTokenModel analyticsToken = JsonConvert.DeserializeObject<AnalyticsTokenModel>(responseStream);
+
+				var handler = new JwtSecurityTokenHandler();
+				var jsonToken = handler.ReadToken(analyticsToken.access_token);
+				var tokenS = jsonToken as JwtSecurityToken;
+
+				if (tokenS.Claims.First(claim => claim.Type == "groups") != null)
+				{
+					return tokenS.Claims.First(claim => claim.Type == "groups").Value;
+				} 
+
+			}
+		}
+
+		return "";
+	}
+	async void RenderDashboard()
+	{
+		_result = new PowerBIEmbedConfig();
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		var groups = await _client.Groups.GetGroupsAsync();
+		_group = groups.Value;
+
+
+		if (!String.IsNullOrEmpty(_paramworkspaceId) && !String.IsNullOrEmpty(_paramreportId))
+		{
+			var clientDashboard = _client.Dashboards.GetDashboard(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+			_workspaceId = Guid.Parse(_paramworkspaceId);
+			_reportId = Guid.Parse(_paramreportId);
+
+			await DashboardChange(clientDashboard,"false");
+
+		}
+
+		StateHasChanged();
+	}
+
+	private async Task ChangeReport()
+	{
+		_result = new PowerBIEmbedConfig();
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		var groups = await _client.Groups.GetGroupsAsync();
+		_group = groups.Value;
+
+		if (!String.IsNullOrEmpty(_paramworkspaceId ) && !String.IsNullOrEmpty(_paramreportId))
+		{
+
+			if (_isdashboard == "false")
+			{
+				var clientReport = _client.Reports.GetReport(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+				_workspaceId = Guid.Parse(_paramworkspaceId);
+				_reportId = Guid.Parse(_paramreportId);
+
+				await ReportChange(clientReport,"true");
+
+			}
+			else
+			{
+				var clientDashboard = _client.Dashboards.GetDashboard(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+				_workspaceId = Guid.Parse(_paramworkspaceId);
+				_reportId = Guid.Parse(_paramreportId);
+
+				await DashboardChange(clientDashboard,"true");
+
+			}
+
+		}
+
+		StateHasChanged();
+	}
+	private async Task BookmarkChangeHandler(Syncfusion.Blazor.DropDowns.ChangeEventArgs<String, BookmarkModel> args)
+	{      
+		_report = await _client.Reports.GetReportsInGroupAsync(_workspaceId);
+		_reports = _report.Value;
+
+
+		Report clientReport = _reports.Where(c=>c.Name == args.ItemData.Title).SingleOrDefault();
+		ReportModel reportModel = new ReportModel()
+            {
+                Id = clientReport.Id,
+                Name = clientReport.Name,
+                DatasetId = clientReport.DatasetId,
+                AppId = clientReport.AppId,
+                Description = clientReport.Description,
+                ReportType = clientReport.ReportType,
+                WebUrl = clientReport.WebUrl,
+                EmbedUrl = clientReport.EmbedUrl,
+            };
+		reportName=  clientReport.Name;
+		await GoToReport(reportModel, "false", "false");
+	}
+	private async Task GoToReport(ReportModel report,string editable = "false",string isdashboard="false")
+	{
+		if (report.ReportType.Contains("Dashboard"))
+		{
+			isdashboard = "true";
+			UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{report.Id}/{editable}/{isdashboard}");
+		}else
+		{
+			UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{report.Id}/{editable}/{isdashboard}");
+		}
+		filterstate.SetFilterShow(report.WebUrl);
+	}
+	public async Task  ResumeCapacity()
+	{
+		try
+		{
+			var enabledCapacity =  _configuration.GetSection("EnableCapacity").Value;
+			if(enabledCapacity != "Enabled")
+			{
+				return;
+			}
+			string CapacityResource = "https://management.azure.com";
+			string ResumeCapacitiesURL = _configuration.GetSection("CapacityResumeApiUrl").Value;
+			var clientId = _configuration.GetSection("AzureAd:ClientId").Value;
+			var secret = _configuration.GetSection("AzureAd:ClientSecret").Value;
+			var oauthUrl = _configuration.GetSection("AzureAd:Instance").Value + _configuration.GetSection("workSpaceId").Value + "/oauth2/token";
+			var content = new FormUrlEncodedContent(new Dictionary
+								<string, string> {
+						  { "client_id", clientId},
+						  { "client_secret", secret},
+						  { "grant_type", "client_credentials" },
+						  { "resource", CapacityResource},
+						  { "scope", "user_impersonation"}
+						});
+
+			var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(oauthUrl))
+					{
+						Content = content
+					};
+
+			var _httpClient = new HttpClient();
+			using (var response = await _httpClient.SendAsync(httpRequestMessage))
+			{
+				if (response.IsSuccessStatusCode)
+				{
+					var responseStream = await response.Content.ReadAsStringAsync();
+
+					AnalyticsTokenModel analyticsToken = JsonConvert.DeserializeObject<AnalyticsTokenModel>(responseStream);
+
+					var _httpClient3 = new HttpClient();
+					_httpClient3.DefaultRequestHeaders.Add("Authorization", "Bearer " + analyticsToken.access_token);
+
+					var httpRequestMessage33 = new HttpRequestMessage(HttpMethod.Post, new Uri(ResumeCapacitiesURL)){  };
+
+					using (var response3 = await _httpClient3.SendAsync(httpRequestMessage33))
+					{
+						var responseStream33 = await response3.Content.ReadAsStringAsync();
+					}
+				}
+			}
+		}
+		catch (Exception ex){ }
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		user = authState.User;
+		userName = user?.Identity?.Name;
+
+		bool hasViewAllReport = false;
+
+
+		var userNameGroupRoles = await _userSecurityService.GetUserNameGroupRoles(userName);
+		if(userNameGroupRoles != null)
+		{
+			customerTenantId = userNameGroupRoles.CustomerTenantId;
+			hasViewAllReport = userNameGroupRoles.ViewAllReport;
+			IsAdminUser = userNameGroupRoles.IsAdmin;
+		}
+
+		reportDashboard = await _reportDashboardService.GetReportsInDashboardByPowerBiId(Guid.Parse(_paramreportId), customerTenantId);
+		reportName = reportDashboard.Title;
+		if(reportDashboard == null)
+		{
+			UriHelper.NavigateTo($"/");
+			return;               
+		}
+
+		bool hasUserRole = await _userSecurityService.CheckUserGroupRole(userName, reportDashboard.UserRoleCode);
+
+		if(!hasUserRole && !hasViewAllReport)
+		{
+			UriHelper.NavigateTo($"/");
+			return;
+		}
+
+		UriHelper.LocationChanged += LocationChanged;
+		await ResumeCapacity();
+		await GetViews();
+		await RenderBookmarks();
+		//Themes
+		palleteList = new List<ThemePallete>();
+		palletItem.dataColors = new string[] { "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff", "#ffffff" };
+		palletItem.background="#ffffffff";
+		palletItem.foreground="#ffffffff";
+		palletItem.tableAccent = "#ffffffff";
+		await retrieveThemes();
+
+		filterstate.IsShowHideFilter = false;
+		filterstate.OnChange += StateHasChanged;
+	}
+	protected override async Task OnAfterRenderAsync(bool firstRender)
+	{
+		if (_paramreportId != previousID)
+		{
+			firstRender = true;
+		}
+		else
+		{
+			firstRender = false;
+		}
+
+		if (firstRender)
+		{
+			await ResumeCapacity();
+			rightSidebarInstance.IsOpen =false;
+			if (_isdashboard == "true")
+			{
+				RenderDashboard();
+			}
+			else
+			{
+				RenderReport();
+			}
+			previousID = _paramreportId;
+
+
+			userTrack =  await _apiClientService.GetUserIPAsync();
+
+			if (user.Identity.IsAuthenticated)
+			{
+				_authMessage = $"{user.Identity.Name} is authenticated.";
+				claims = user.Claims;
+				userName = claims?.FirstOrDefault(x => x.Type.Equals("name", StringComparison.OrdinalIgnoreCase))?.Value;
+				userTrack.UserEmail = user.Identity.Name;
+			}
+			else
+			{
+				_authMessage = "The user is NOT authenticated.";
+			}
+			try
+			{
+
+				userTrack.Page = "reports";
+				userTrack.Browser = string.Empty;
+				userTrack.Browser = string.Empty;
+				userTrack.DateTimeLog = DateTime.Now;
+				userTrack.UserName = userName;
+
+				userTrack.ReportName = reportDashboard.Title ?? string.Empty;
+
+				using (var db = new DataAnalyticsDBContext())
+				{
+					string[] tagLines = { };
+					try
+					{
+						DataSource = new ObservableCollection<ListDataModel>();
+						var dbBoard = new ReportInDashboard();
+
+						dbBoard = db.ReportInDashboards.Where(c => c.Title == userTrack.ReportName).FirstOrDefault();
+
+						if (dbBoard.Tags != null)
+						{
+							tagLines = dbBoard.Tags.Split(',');
+						}
+
+						var random = new Random();
+
+						if (dbBoard.Tags == null)
+						{
+							DataSource.Add(new ListDataModel
+								{
+									Id = random.Next(100, 300).ToString(),
+									TagName = string.Empty
+								});
+						}
+						else
+						{
+							tagLines = dbBoard.Tags.Split(',');
+
+							foreach (var tag in tagLines)
+							{
+								DataSource.Add(new ListDataModel
+									{
+										Id = random.Next(100, 300).ToString(),
+										TagName = tag
+									});
+							}
+
+						}
+
+						db.Add(userTrack);
+						db.SaveChanges();
+					}
+					catch (Exception ex)
+					{
+
+						Console.WriteLine("\nError Message ---\n{0}", ex.Message);
+					}
+
+				}
+			}
+			catch (Exception ex) { }
+
+		}
+
+		//await InvokeAsync(StateHasChanged);
+		await GetViews();
+		await Task.Delay(5000);
+		await applyDefaultTheme();
+	}
+	private async Task applyDefaultTheme(){
+		try
+		{
+			ThemePalleteJsonRequest obj = new ThemePalleteJsonRequest();
+			var objDefault = palleteList.Where(x => x.IsDefault == true).FirstOrDefault();
+
+			if (objDefault != null)
+			{
+				obj.name = objDefault.name;
+				obj.foreground = objDefault.foreground.Substring(0, 7);
+				obj.background = objDefault.background.Substring(0, 7); ;
+				obj.tableAccent = objDefault.tableAccent.Substring(0, 7); ;
+
+				for (int i = 0; i < objDefault.dataColors.Length; i++)
+				{
+					obj.dataColors[i] = objDefault.dataColors[i].Substring(0, 7);
+				}
+
+				var jsonText = Newtonsoft.Json.JsonConvert.SerializeObject(obj);
+
+				await Interop.ApplyTheme(JSRuntime, jsonText);
+			}
+		}
+		catch (Exception ex) { }
+	}
+	private async Task retrieveThemes(){
+		try
+		{
+			palleteList = new List<ThemePallete>();
+			var themePallets = await _reportTheme.GetReportTheme(customerTenantId, reportDashboard.ReportDbId);
+			if (themePallets != null)
+			{
+				foreach (var item in themePallets)
+				{
+					var jsonObj = JsonConvert.DeserializeObject<ThemePallete>(item.Theme);
+					jsonObj.dataColorsList = new Dictionary<string, string[]>();
+					jsonObj.dataColorsList.Add(jsonObj.name, jsonObj.dataColors);
+					jsonObj.ID = item.ID;
+					jsonObj.IsDefault = item.IsDefaultTheme ?? false;
+					jsonObj.name = item.ThemeName;
+
+					if (jsonObj != null)
+						palleteList.Add(jsonObj);
+
+				}
+			}
+
+			ThemePallete item2 = new ThemePallete();
+			item2.name = "Divergent";
+			item2.dataColorsList.Add("Divergent", new string[] { "#B73A3A", "#EC5656", "#F28A90", "#F8BCBD", "#99E472", "#23C26F", "#0AAC00", "#026645" });
+			item2.dataColors = new string[] { "#B73A3A", "#EC5656", "#F28A90", "#F8BCBD", "#99E472", "#23C26F", "#0AAC00", "#026645" };
+			item2.foreground = "#252423";
+			item2.background = "#F4F4F4";
+			item2.tableAccent = "#B73A3A";
+
+			ThemePallete item3 = new ThemePallete();
+			item3.name = "Executive";
+			item3.dataColorsList.Add("Executive", new string[] { "#B73A3A", "#EC5656", "#F28A90", "#F8BCBD", "#99E472", "#23C26F", "#0AAC00", "#026645" });
+			item3.dataColors = new string[] { "#B73A3A", "#EC5656", "#F28A90", "#F8BCBD", "#99E472", "#23C26F", "#0AAC00", "#026645" };
+			item3.foreground = "#FFFFFF";
+			item3.background = "#9C5252";
+			item3.tableAccent = "#6076B4";
+
+			ThemePallete item4 = new ThemePallete();
+			item4.name = "Tidal";
+			item4.dataColorsList.Add("Tidal", new string[] { "#094782", "#0B72D7", "#098BF5", "#54B5FB", "#71C0A7", "#57B956", "#478F48", "#326633" });
+			item4.dataColors = new string[] { "#094782", "#0B72D7", "#098BF5", "#54B5FB", "#71C0A7", "#57B956", "#478F48", "#326633" };
+			item4.foreground = "#094782";
+			item4.background = "#F4F4F4";
+			item4.tableAccent = "#094782";
+			if (palleteList.Where(x => x.name == item2.name).FirstOrDefault() == null)
+				palleteList.Add(item2);
+			if (palleteList.Where(x => x.name == item3.name).FirstOrDefault() == null)
+				palleteList.Add(item3);
+			if (palleteList.Where(x => x.name == item4.name).FirstOrDefault() == null)
+				palleteList.Add(item4);
+
+			var objDefault = palleteList.Where(x => x.IsDefault == true).FirstOrDefault();
+
+			if (objDefault != null)
+			{
+				checkedValue = objDefault.name;
+			}
+		}
+		catch (Exception ex) { }
+	}
+	private async Task ReportChange(Report report,string fullscreen="false")
+	{
+		var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel:"edit");
+		var tokenResponse = _client.Reports.GenerateTokenAsync(new Guid(_workspaceId.ToString()), new Guid(_reportId.ToString()), generateTokenRequestParameters).Result;
+
+		await Interop.CreateReport(JSRuntime, PowerBIElement,tokenResponse.Token, report.EmbedUrl, report.Id.ToString(),IsEditMode? "true": "false",fullscreen);
+
+		await applyDefaultTheme();
+	}
+
+
+	private async Task DashboardChange(Dashboard dashboard,string fullscreen="false")
+	{
+		var generateTokenRequestParameters = new GenerateTokenRequest();
+		var tokenResponse = _client.Dashboards.GenerateTokenAsync(new Guid(_workspaceId.ToString()), new Guid(_reportId.ToString()), generateTokenRequestParameters).Result;
+
+		_result.EmbedToken = tokenResponse;
+		_result.EmbedUrl = dashboard.EmbedUrl;
+		_result.Id = dashboard.Id.ToString();
+
+		await Interop.CreateDashboard(JSRuntime, PowerBIElement,tokenResponse.Token, _result.EmbedUrl, _result.Id.ToString(),fullscreen);
+		await applyDefaultTheme();
+	}
+
+	private const string AuthorityFormat = "https://login.microsoftonline.com/94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0/v2.0";
+	private const string MSGraphScope = "https://analysis.windows.net/powerbi/api/.default";
+	private async Task<AuthenticationResult> DoAuthentication()
+	{
+		IConfidentialClientApplication daemonClient;
+		daemonClient = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+			.WithAuthority(string.Format(AuthorityFormat, _configuration.GetSection("AzureAd:TenantId").Value))
+			.WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+			.Build();
+
+		AuthenticationResult authResult = await daemonClient.AcquireTokenForClient(new[] { MSGraphScope }).ExecuteAsync();
+		return authResult;
+	}
+
+	private async Task UploadCardPicture()
+	{
+		var options = new ModalOptions { UseCustomLayout = true };
+		var modalParams = new ModalParameters();
+
+		using (var db = new DataAnalyticsDBContext())
+		{
+			var dbBoard = db.ReportInDashboards.FirstOrDefault(c => c.Title == userTrack.ReportName);
+
+			if(dbBoard != null)
+			{
+				UploadCardPictureDialog.OpenDialog();
+				StateHasChanged();
+			}
+
+		}
+
+	}
+	private async Task ItemSelected(MenuEventArgs args)
+	{
+		if (!string.IsNullOrEmpty(args.Item.Id))
+		{
+			var state = _bookmarkList.Where(x => x.Id.ToString() == args.Item.Id).FirstOrDefault().state;
+			await Interop.ApplyState(JSRuntime, state);
+			StateHasChanged();
+		}
+	}
+	private async Task ApplyState(BookmarkModel model)
+	{
+		await Interop.ApplyState(JSRuntime,model.state);
+		StateHasChanged();
+
+
+	}
+	private async Task RenameReport() { 
+
+		PowerBIClient _client;
+		PowerBIEmbedConfig _result;
+		Reports _report;
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+
+
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+		// var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+
+		_result = new PowerBIEmbedConfig();
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		CloneReportRequest cloneReportRequest = new CloneReportRequest();
+		cloneReportRequest.Name = this.reportName;
+		cloneReportRequest.TargetWorkspaceId = _workspaceId;
+		try{
+
+			var cloned = _client.Reports.CloneReportInGroup(_workspaceId,Guid.Parse(_paramreportId), cloneReportRequest);
+			_client.Reports.DeleteReport(_workspaceId,Guid.Parse(_paramreportId));
+
+			showAlertMessage(AlertStatus.Success,"Report successfully renamed to: "+ reportName,"Success Message!");
+
+			this.Visibility2 = !this.Visibility2;
+			_paramreportId = cloned.Id.ToString();
+			StateHasChanged();
+
+		}catch(Exception ex)
+		{
+			showAlertMessage(AlertStatus.Danger,ex.Message,"Error Message!");
+		}
+	}
+
+	private async Task CaptureViews()
+	{
+		var clientReport = _client.Reports.GetReport(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+		var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "edit");
+		var tokenResponse = _client.Reports.GenerateTokenAsync(new Guid(_workspaceId.ToString()), new Guid(_reportId.ToString()), generateTokenRequestParameters).Result;
+
+		_result.EmbedToken = tokenResponse;
+		_result.EmbedUrl = clientReport.EmbedUrl;
+		_result.Id = clientReport.Id.ToString();
+
+		var test=  await Interop.CaptureViews(JSRuntime, PowerBIElement,tokenResponse.Token, _result.EmbedUrl, _result.Id.ToString(),_paramEditable,"false");
+		var obj = Newtonsoft.Json.JsonConvert.DeserializeObject<CaptureState>(test.ToString());
+		BookmarkModel model = new BookmarkModel();
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+		var objUser =  await _userService.GetUsers(user.Identity.Name);
+		model.DisplayName = obj.displayName;
+		model.IsActive = true;
+		model.Title = viewName;
+		model.state = obj.state;
+		model.UserId  = objUser.userID;
+		model.ReportId = _paramreportId;
+
+		var bookmark=await _bookmarkService.UpsertBookmark(model);
+		this.Visibility = !this.Visibility ;
+		StateHasChanged();
+		MessageBoxDialog.OpenDialog(AlertStatus.Success, string.Format("Views for '{0}' successfully saved.", model.Title));
+		viewName = string.Empty;
+
+		await GetViews();
+		StateHasChanged();
+	}
+   private void showAlertMessage(string alertType, string message, string title)
+	{
+	   MessageBoxDialog.OpenDialog(AlertStatus.Success, message);
+	}
+	private async Task GetViews()
+	{
+		var objUser =  await _userService.GetUsers(user.Identity.Name);
+		_bookmarkList.Clear();
+		_bookmarkList = await _bookmarkService.GetBookmarkInReportByReportId(_paramreportId, objUser.userID);
+		//var obj = Newtonsoft.Json.JsonConvert.DeserializeObject<CaptureState>(test.ToString());
+		//{"name":"Bookmarkc17602c5b0932a401c66","displayName":"Bookmark 1","state":"H4sIAAAAAAAAA+1XXU/jOBT9K1VeZkaKVk7SNAlvUECMlkVsi9iHFQ839k3rwY2zjsPSQf3vazspbaFsEYOGSrsvqLm+vj4+98OHB4/xuhIwv4AZegfekZS3M1C3vcDzvXLTRoNkQEIa5ySLQuiTgA4GxktWmsuy9g4ePA1qgvqa1w0IG9AY/7zxPRDiEib2qwBRo+9VqGpZguDfsXU2S1o1uPA9vK+EVGBDjjVotGHvjLv5NlCCXyJzIlDN73CMVLfWEVZS6e47A5YMWJywgmJsEKYB7Zs9dbvqYO72t4c6YENZauClAWBtaRQNaJIUGYsZIzmjaQzWXnChO5d8fnJfKXNvw8a8svQdsjsoKTLPXU5h3d7lwRtK0czcr5MN+1g2iuIIC7dUaq7nJszvDap54C0MR5dKGgad9cz4OttU/j1UaAhj3gFZ+LtP/w2hbhT+2PFXUoPoDU2C6954ygvdC/YKTbhXaKItaG6MpeblRHSdsCq9qxYkGN/hFJS2rZZ/M0Vr68zskoqhOpq7UjvmatkNgf8E8zuW2eJm2Xxm7dtaRw3NdSZStWDe8cCbhbXHQRpinwxoSDApIkbzPH+57bqpdeoW47TIaEwYZCTJkgQgS3NDZFcAHWxODe9+F85Gu14OnND3TpWcubjdhPzLeD4F73ttsogl6I8p2tJxRJSM6+72F1I/p+TrE5rq1xPYfjhAT7gb4cRucNm6BtG4MWzCnnNzvbbCnNm4lo0Q1tHyvHC1uNkIZ9zsUHQ6P8c7FM8RPa6/IdtrezvIvZXJOnRnru7zpHd8jwKdIjtevWAtf5zZM2tqGPnK2haYVaB4vWyI5devvGwDnWOh36tX1uCO+GTq4r5MvSvwzTf485GA8vaLZ/PxsL1U9zBLZ9KAf8N8qwWnpuvWh5s3Q6Mj7A8GGlxKq5Zfju26ZG4ZXc9vpffTEdScfmoZvrHvv1hOyGfham141WOHcuz8dgR3MuYxtAGJIygnuCU0L6loGF5JBvMdQa0A6mIufvJ4PynZFXfpe3HCPw6SPSm31ZBrnwgz5ZM4GCRGw9EIkaZIXGr/rfQ03utc3m8+rDbaIC0CEoYkCYOsH/aLIC+S/7TOOzQS3Cj43gjryhQE9my59D7PePllD3TfbnQfqQN3o9umC/cH3Tbu/letu1VrnwZZ2I8jmoWswCKlUZK9VrX2ISiSiKSEJUgyCAKElWr9sILYXqYbyGkQhjGLCMUoJCSjSQDwkt5+/yl5DPOeE1G7gZKknwUF0nxAEkLzfpoNoldQfDiZKJzAUtS/f80etzLwQrqF06bsGiR6QxMKXuIPNeFH3vbnde1a1bT/By22i1HZ6LoCipdQbpN6plCgZMheKfN8myuei11Cdl1r2j//AJV1PNOyEwAA"}"
+  //"name":"Bookmarkc17602c5b0932a401c66","displayName":"Bookmark 1","state":"H4sIAAAAAAAAA+1XXU/jOBT9K1VeZkaKVk7SNAlvUECMlkVsi9iHFQ839k3rwY2zjsPSQf3vazspbaFsEYOGSrsvqLm+vj4+98OHB4/xuhIwv4AZegfekZS3M1C3vcDzvXLTRoNkQEIa5ySLQuiTgA4GxktWmsuy9g4ePA1qgvqa1w0IG9AY/7zxPRDiEib2qwBRo+9VqGpZguDfsXU2S1o1uPA9vK+EVGBDjjVotGHvjLv5NlCCXyJzIlDN73CMVLfWEVZS6e47A5YMWJywgmJsEKYB7Zs9dbvqYO72t4c6YENZauClAWBtaRQNaJIUGYsZIzmjaQzWXnChO5d8fnJfKXNvw8a8svQdsjsoKTLPXU5h3d7lwRtK0czcr5MN+1g2iuIIC7dUaq7nJszvDap54C0MR5dKGgad9cz4OttU/j1UaAhj3gFZ+LtP/w2hbhT+2PFXUoPoDU2C6954ygvdC/YKTbhXaKItaG6MpeblRHSdsCq9qxYkGN/hFJS2rZZ/M0Vr68zskoqhOpq7UjvmatkNgf8E8zuW2eJm2Xxm7dtaRw3NdSZStWDe8cCbhbXHQRpinwxoSDApIkbzPH+57bqpdeoW47TIaEwYZCTJkgQgS3NDZFcAHWxODe9+F85Gu14OnND3TpWcubjdhPzLeD4F73ttsogl6I8p2tJxRJSM6+72F1I/p+TrE5rq1xPYfjhAT7gb4cRucNm6BtG4MWzCnnNzvbbCnNm4lo0Q1tHyvHC1uNkIZ9zsUHQ6P8c7FM8RPa6/IdtrezvIvZXJOnRnru7zpHd8jwKdIjtevWAtf5zZM2tqGPnK2haYVaB4vWyI5devvGwDnWOh36tX1uCO+GTq4r5MvSvwzTf485GA8vaLZ/PxsL1U9zBLZ9KAf8N8qwWnpuvWh5s3Q6Mj7A8GGlxKq5Zfju26ZG4ZXc9vpffTEdScfmoZvrHvv1hOyGfham141WOHcuz8dgR3MuYxtAGJIygnuCU0L6loGF5JBvMdQa0A6mIufvJ4PynZFXfpe3HCPw6SPSm31ZBrnwgz5ZM4GCRGw9EIkaZIXGr/rfQ03utc3m8+rDbaIC0CEoYkCYOsH/aLIC+S/7TOOzQS3Cj43gjryhQE9my59D7PePllD3TfbnQfqQN3o9umC/cH3Tbu/letu1VrnwZZ2I8jmoWswCKlUZK9VrX2ISiSiKSEJUgyCAKElWr9sILYXqYbyGkQhjGLCMUoJCSjSQDwkt5+/yl5DPOeE1G7gZKknwUF0nxAEkLzfpoNoldQfDiZKJzAUtS/f80etzLwQrqF06bsGiR6QxMKXuIPNeFH3vbnde1a1bT/By22i1HZ6LoCipdQbpN6plCgZMheKfN8myuei11Cdl1r2j//AJV1PNOyEwAA"}"  
+  }
+	#region Export Report
+	private async Task<string> PostExportRequest(
+	Guid reportId,
+	Guid groupId,
+	FileFormat format,
+	IList<string> pageNames = null, /* Get the page names from the GetPages REST API */
+	string urlFilter = null)
+	{
+		var powerBIReportExportConfiguration = new PowerBIReportExportConfiguration
+	{
+		Settings = new ExportReportSettings
+		{
+			Locale = "en-us",
+		},
+		// Note that page names differ from the page display names
+		// To get the page names use the GetPages REST API
+		Pages = pageNames?.Select(pn => new ExportReportPage(pageName: pn)).ToList(),
+		// ReportLevelFilters collection needs to be instantiated explicitly
+		ReportLevelFilters = !string.IsNullOrEmpty(urlFilter) ? new List<ExportFilter>() { new ExportFilter(urlFilter) } : null,
+
+	};
+
+		var exportRequest = new ExportReportRequest
+	{
+		Format = format,
+		PowerBIReportConfiguration = powerBIReportExportConfiguration,
+	};
+		AuthenticationResult authenticationResult = null;
+		authenticationResult = await DoAuthentication();
+		var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+		_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+		// The 'Client' object is an instance of the Power BI .NET SDK
+		var export = await _client.Reports.ExportToFileInGroupAsync(groupId, reportId, exportRequest);
+
+		// Save the export ID, you'll need it for polling and getting the exported file
+		return export.Id;
+	}
+	private async Task<HttpOperationResponse<Export>> PollExportRequest(
+		Guid reportId,
+		Guid groupId,
+		string exportId /* Get from the PostExportRequest response */,
+		int timeOutInMinutes,
+		CancellationToken token)
+	{
+		HttpOperationResponse<Export> httpMessage = null;
+		Export exportStatus = null;
+		DateTime startTime = DateTime.UtcNow;
+		const int c_secToMillisec = 1000;
+		do
+		{
+			if (DateTime.UtcNow.Subtract(startTime).TotalMinutes > timeOutInMinutes || token.IsCancellationRequested)
+			{
+				// Error handling for timeout and cancellations 
+				return null;
+			}
+
+			// The 'Client' object is an instance of the Power BI .NET SDK
+			AuthenticationResult authenticationResult = null;
+			authenticationResult = await DoAuthentication();
+			var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+			_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+			httpMessage = await _client.Reports.GetExportToFileStatusInGroupWithHttpMessagesAsync(groupId, reportId, exportId);
+			exportStatus = httpMessage.Body;
+
+			// You can track the export progress using the PercentComplete that's part of the response
+			//  SomeTextBox.Text = string.Format("{0} (Percent Complete : {1}%)", exportStatus.Status.ToString(), exportStatus.PercentComplete);
+			_exportStatus =exportStatus.PercentComplete== 0 ? 40 : exportStatus.PercentComplete;
+			StateHasChanged();
+			if (exportStatus.Status == ExportState.Running || exportStatus.Status == ExportState.NotStarted)
+			{
+				// The recommended waiting time between polling requests can be found in the RetryAfter header
+				// Note that this header is not always populated
+				var retryAfter = httpMessage.Response.Headers.RetryAfter;
+				var retryAfterInSec = retryAfter.Delta.Value.Seconds;
+				await Task.Delay(retryAfterInSec * c_secToMillisec);
+			}
+		}
+		// While not in a terminal state, keep polling
+		while (exportStatus.Status != ExportState.Succeeded && exportStatus.Status != ExportState.Failed);
+
+		return httpMessage;
+	}
+	private async Task<ExportedFile> GetExportedFile(
+		Guid reportId,
+		Guid groupId,
+		Export export /* Get from the PollExportRequest response */)
+	{
+		if (export.Status == ExportState.Succeeded)
+		{
+			// The 'Client' object is an instance of the Power BI .NET SDK
+			AuthenticationResult authenticationResult = null;
+			authenticationResult = await DoAuthentication();
+			var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+			_client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+			var fileStream = await _client.Reports.GetFileOfExportToFileAsync(groupId, reportId, export.Id);
+			return new ExportedFile
+		{
+			FileStream = fileStream,
+			FileSuffix = export.ResourceFileExtension,
+		};
+		}
+		return null;
+	}
+
+	public class ExportedFile
+	{
+		public Stream FileStream;
+		public string FileSuffix;
+	}
+	private async Task ExportReport(FileFormat format)
+	{
+		if (!String.IsNullOrEmpty(_paramworkspaceId ) && !String.IsNullOrEmpty(_paramreportId))
+		{
+
+			if (_isdashboard == "false")
+			{
+				var clientReport = _client.Reports.GetReport(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+				_workspaceId = Guid.Parse(_paramworkspaceId);
+				_reportId = Guid.Parse(_paramreportId);
+
+				await  ExportPowerBIReport( _reportId,_workspaceId ,format,3,CancellationToken.None);
+
+			}
+			else
+			{
+				var clientDashboard = _client.Dashboards.GetDashboard(Guid.Parse(_paramworkspaceId), Guid.Parse(_paramreportId));
+
+				_workspaceId = Guid.Parse(_paramworkspaceId);
+				_reportId = Guid.Parse(_paramreportId);
+
+				await  ExportPowerBIReport( _reportId,_workspaceId ,format,3,CancellationToken.None);
+
+			}
+
+		}
+		StateHasChanged();
+
+	}
+	private async Task<ExportedFile> ExportPowerBIReport(
+		Guid reportId,
+		Guid groupId,
+		FileFormat format,
+		int pollingtimeOutInMinutes,
+		CancellationToken token,
+		IList<string> pageNames = null,  /* Get the page names from the GetPages REST API */
+		string urlFilter = null)
+	{
+		const int c_maxNumberOfRetries = 3; /* Can be set to any desired number */
+		const int c_secToMillisec = 1000;
+		try
+		{
+			Export export = null;
+			int retryAttempt = 1;
+			do
+			{
+				var exportId = await PostExportRequest(reportId, groupId, format, pageNames, urlFilter);
+				var httpMessage = await PollExportRequest(reportId, groupId, exportId, pollingtimeOutInMinutes, token);
+				_exportStatus = _exportStatus + 2;
+				 StateHasChanged();
+				export = httpMessage.Body;
+				if (export == null)
+				{
+					// Error, failure in exporting the report
+					return null;
+				}
+				if (export.Status == ExportState.Failed)
+				{
+					// Some failure cases indicate that the system is currently busy. The entire export operation can be retried after a certain delay
+					// In such cases the recommended waiting time before retrying the entire export operation can be found in the RetryAfter header
+					var retryAfter = httpMessage.Response.Headers.RetryAfter;
+					if(retryAfter == null)
+					{
+						// Failed state with no RetryAfter header indicates that the export failed permanently
+						return null;
+					}
+
+					var retryAfterInSec = retryAfter.Delta.Value.Seconds;
+					await Task.Delay(retryAfterInSec * c_secToMillisec);
+				}
+			}
+			while (export.Status != ExportState.Succeeded && retryAttempt++ < c_maxNumberOfRetries);
+
+			if (export.Status != ExportState.Succeeded)
+			{
+				// Error, failure in exporting the report
+				return null;
+			}
+
+			var exportedFile = await GetExportedFile(reportId, groupId, export);
+
+			// Now you have the exported file stream ready to be used according to your specific needs
+			// For example, saving the file can be done as follows:
+
+			var pathOnDisk = @"C:\PowerBIReport\" + export.ReportName + exportedFile.FileSuffix;
+
+
+			using (MemoryStream ms = new MemoryStream())
+			{
+				exportedFile.FileStream.CopyTo(ms);
+				byte[] output = ms.ToArray();
+				JSRuntime.InvokeVoidAsync("jsSaveAsFile",
+				 export.ReportName+exportedFile.FileSuffix,
+				 Convert.ToBase64String(output)
+				 );
+				ms.Close();
+			}
+
+			_exportStatus = 0;
+			return exportedFile;
+	}
+	catch(Exception ex)
+	{
+		// Error handling
+		throw;
+	}
+}
+public static byte[] ReadFully(Stream input)
+{
+	using (MemoryStream ms = new MemoryStream())
+	{
+		input.CopyTo(ms);
+		return ms.ToArray();
+	}
+}
+public static byte[] ReadToEnd(System.IO.Stream stream)
+{
+	long originalPosition = 0;
+
+	if(stream.CanSeek)
+	{
+		 originalPosition = stream.Position;
+		 stream.Position = 0;
+	}
+
+	try
+	{
+		byte[] readBuffer = new byte[4096];
+
+		int totalBytesRead = 0;
+		int bytesRead;
+
+		while ((bytesRead = stream.Read(readBuffer, totalBytesRead, readBuffer.Length - totalBytesRead)) > 0)
+		{
+			totalBytesRead += bytesRead;
+
+			if (totalBytesRead == readBuffer.Length)
+			{
+				int nextByte = stream.ReadByte();
+				if (nextByte != -1)
+				{
+					byte[] temp = new byte[readBuffer.Length * 2];
+					Buffer.BlockCopy(readBuffer, 0, temp, 0, readBuffer.Length);
+					Buffer.SetByte(temp, totalBytesRead, (byte)nextByte);
+					readBuffer = temp;
+					totalBytesRead++;
+				}
+			}
+		}
+
+		byte[] buffer = readBuffer;
+		if (readBuffer.Length != totalBytesRead)
+		{
+			buffer = new byte[totalBytesRead];
+			Buffer.BlockCopy(readBuffer, 0, buffer, 0, totalBytesRead);
+		}
+		return buffer;
+	}
+	finally
+	{
+		if(stream.CanSeek)
+		{
+			 stream.Position = originalPosition; 
+		}
+	}
+}
+
+	#endregion
+		public class CaptureState
+	{
+		public string name { get; set; }
+		public string displayName { get; set; }
+		public string state { get; set; }
+	}
+
+}
+
+
+
+
+<style>
+   
+	.e-acrdn-content li, .e-acrdn-content li .e-content-icon:hover {
+			cursor: pointer;
+			color: #e3165b;
+	}
+	.e-acrdn-content li {
+		display: block;
+		font-size: 10px;
+		padding: 10px !important;
+	}
+	.e-acrdn-icons {
+		font-family: 'acrdn-icons';
+		font-size: 16px;
+	}
+	.e-sidebar {
+		background-color: #f8f8f8;
+		color: black;
+	}
+	.flex {
+		display: flex;
+		justify-content: center;
+	}
+	.main > div {
+		padding: 0px !important;
+	}
+	.margin {
+		margin: 10px;
+		width: 300px;
+	}
+
+	.placeBottom
+	{
+	position: fixed;
+	bottom: 5%;
+	flex-direction: row;
+	}
+	#sample-list-flat.e-listview .e-content .delete-icon::after {
+		font-family: "e-icon";
+		content: "\e700";
+		float: right;
+		cursor: pointer;
+	}
+	.text-content {
+		font-size: 1rem;
+	}
+	.border-radius {
+	border-radius: 11px;
+	min-width: 100%;
+}
+	@@font-face {
+		font-family: "e-icon";
+		src: url(data:application/x-font-ttf;charset=utf-8;base64,AAEAAAAKAIAAAwAgT1MvMj1tSfIAAAEoAAAAVmNtYXDnEOdVAAABiAAAADZnbHlmXOniGAAAAcgAAAFAaGVhZBC1AhkAAADQAAAANmhoZWEIUQQDAAAArAAAACRobXR4CAAAAAAAAYAAAAAIbG9jYQCgAAAAAAHAAAAABm1heHABDgCYAAABCAAAACBuYW1lv4Bt4QAAAwgAAAIZcG9zdJx8QW4AAAUkAAAAOwABAAAEAAAAAFwEAAAAAAAD9AABAAAAAAAAAAAAAAAAAAAAAgABAAAAAQAApWcDV18PPPUACwQAAAAAANbRXpQAAAAA1tFelAAAAAAD9AP0AAAACAACAAAAAAAAAAEAAAACAIwAAgAAAAAAAgAAAAoACgAAAP8AAAAAAAAAAQQAAZAABQAAAokCzAAAAI8CiQLMAAAB6wAyAQgAAAIABQMAAAAAAAAAAAAAAAAAAAAAAAAAAAAAUGZFZABA5wDnAAQAAAAAXAQAAAAAAAABAAAAAAAABAAAAAQAAAAAAAACAAAAAwAAABQAAwABAAAAFAAEACIAAAAEAAQAAQAA5wD//wAA5wD//wAAAAEABAAAAAEAAAAAAAAAoAAAAAIAAAAAA/QD9AALAIsAAAEHFwcnByc3JzcXNwUfHz8fLx8PHgLuhIRrg4NrhIRrg4P9iQECAwQGBwcJCwsMDQ4PDxEREhMUFBUWFhcXFxkYGRkaGhkZGBkXFxcWFhUUFBMSEREPDw4NDAsLCQcHBgQDAgEBAgMEBgcHCQsLDA0ODw8RERITFBQVFhYXFxcZGBkZGhoZGRgZFxcXFhYVFBQTEhERDw8ODQwLCwkHBwYEAwICg4OGa4SEa4ODaoCE7hoZGRgZFxcXFhYVFBQTEhERDw8ODQwLCwkHBwYEAwIBAQIDBAYHBwkLCwwNDg8PERESExQUFRYWFxcXGRgZGRoaGRkYGRcXFxYWFRQUExIREQ8PDg0MCwsJBwcGBAMCAQECAwQGBwcJCwsMDQ4PDxEREhMUFBUWFhcXFxkYGRkAAAASAN4AAQAAAAAAAAABAAAAAQAAAAAAAQAGAAEAAQAAAAAAAgAHAAcAAQAAAAAAAwAGAA4AAQAAAAAABAAGABQAAQAAAAAABQALABoAAQAAAAAABgAGACUAAQAAAAAACgAsACsAAQAAAAAACwASAFcAAwABBAkAAAACAGkAAwABBAkAAQAMAGsAAwABBAkAAgAOAHcAAwABBAkAAwAMAIUAAwABBAkABAAMAJEAAwABBAkABQAWAJ0AAwABBAkABgAMALMAAwABBAkACgBYAL8AAwABBAkACwAkARcgZGVsZXRlUmVndWxhcmRlbGV0ZWRlbGV0ZVZlcnNpb24gMS4wZGVsZXRlRm9udCBnZW5lcmF0ZWQgdXNpbmcgU3luY2Z1c2lvbiBNZXRybyBTdHVkaW93d3cuc3luY2Z1c2lvbi5jb20AIABkAGUAbABlAHQAZQBSAGUAZwB1AGwAYQByAGQAZQBsAGUAdABlAGQAZQBsAGUAdABlAFYAZQByAHMAaQBvAG4AIAAxAC4AMABkAGUAbABlAHQAZQBGAG8AbgB0ACAAZwBlAG4AZQByAGEAdABlAGQAIAB1AHMAaQBuAGcAIABTAHkAbgBjAGYAdQBzAGkAbwBuACAATQBlAHQAcgBvACAAUwB0AHUAZABpAG8AdwB3AHcALgBzAHkAbgBjAGYAdQBzAGkAbwBuAC4AYwBvAG0AAAAAAgAAAAAAAAAKAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAQIBAwARY2lyY2xlLWNsb3NlLS0tMDIAAAA=) format("truetype");
+		font-weight: normal;
+		font-style: normal;
+	}
+	.e-progress-btn{
+		background-color: #0378d5;
+	}
+	@@media (min-width:320px)  {     
+    .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:481px)  {    
+    .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:641px)  {   
+     .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+@@media (min-width:961px)  {   
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1025px) {    
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1281px) {   
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+</style>

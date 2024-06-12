@@ -1,0 +1,152 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Syncfusion.Blazor.Data
+@inject IUserSecurityService _userSecurityService
+
+<style> 
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    } 
+</style> 
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Customer Tenant Group</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <EditForm id="frmCustomerGroup" Model="@customerUserGroupModel" OnSubmit="Submit">
+                 <DataAnnotationsValidator />
+                <div class="modal-body">
+                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Id</label>
+                         <SfTextBox Placeholder="Id" Value="@customerUserGroupModel.Id.ToString()" Readonly=true> </SfTextBox>
+                    </div>
+                   <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Title</label>
+                         <SfTextBox ID="Group Name" Placeholder="Group Name" @bind-Value="customerUserGroupModel.GroupName"></SfTextBox>
+                     </div>
+                   <div class="form-group d-flex" style="margin-bottom: 2%;"> 
+                        <label class="col-2" for="name">Tenant</label>
+                         <SfDropDownList TValue="int?" TItem="CustomerTenantModel" Placeholder="Select a tenant" DataSource="@customerTenantData" @bind-Value="customerUserGroupModel.CustomerTenantId">
+                            <DropDownListFieldSettings Value="Id" Text="Name"></DropDownListFieldSettings>
+                         </SfDropDownList>
+                     </div>
+
+                     <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Tenant Group SID</label>
+                         <SfTextBox ID="Tenant Group SID" Placeholder="Tenant Group SID" @bind-Value="customerUserGroupModel.CustomerTenantSID"></SfTextBox>
+                     </div>
+
+                     <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="active">Active</label>
+                         <SfCheckBox  @bind-Checked="customerUserGroupModel.IsActive"></SfCheckBox>
+                     </div>
+                     <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="active">View By Everyone</label>
+                         <SfCheckBox  @bind-Checked="customerUserGroupModel.ViewAllReport"></SfCheckBox>
+                     </div>
+                </div>
+             </EditForm>
+            <div class="modal-footer">
+                    <SfButton CssClass="e-medium" HtmlAttributes="@(new() { { "form", "frmCustomerGroup" } })">Submit</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="Cancel">Close</SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int customerUserGroupId { get; set; } = 0;
+
+    [Parameter]
+    public string groupname { get; set; }
+
+    [Parameter]
+    public int customerTenantId { get; set; } = 0;
+
+    [Parameter]
+    public bool isActive { get; set; } = true;
+
+    [Parameter]
+    public bool viewAllReport { get; set; } = true;
+
+    [Parameter]
+    public string customerTenantSID { get; set; }
+
+    CustomerUserGroupModel customerUserGroupModel { get; set; } = new CustomerUserGroupModel();
+
+    List<CustomerTenantModel> customerTenantData = new List<CustomerTenantModel>();
+
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        customerTenantData = await _userSecurityService.GetAllCustomerTenantsByUserName(user.Identity.Name);
+
+        if(customerUserGroupId > 0)
+        {
+            customerUserGroupModel = new CustomerUserGroupModel
+            {
+                Id = customerUserGroupId,
+                GroupName = groupname,
+                CustomerTenantId = customerTenantId,
+                IsActive = isActive,
+                ViewAllReport = viewAllReport,
+                CustomerTenantSID = customerTenantSID
+            };
+        } 
+        else
+        {
+            customerUserGroupModel.IsActive = true;
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task Submit(EditContext context)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        bool isValid = context.Validate();
+
+        if (isValid)
+        {
+            customerUserGroupModel = await _userSecurityService.UpsertCustomerUserGroup(customerUserGroupModel);
+            await _modalInstance.CloseAsync(ModalResult.Ok<CustomerUserGroupModel>(customerUserGroupModel));           
+        }
+        else
+        {
+            // Form has invalid inputs.
+        }
+        
+    }
+
+}

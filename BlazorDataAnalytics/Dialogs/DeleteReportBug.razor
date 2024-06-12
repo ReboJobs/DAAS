@@ -1,0 +1,64 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportBugService
+@using Syncfusion.Blazor.Data
+
+@inject IReportBugService _reportBugService
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Delete Reported Bug</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                 Do you want to delete this Report Bug Id: <b>@reportBugId</b> ?
+            </div>
+            <div class="modal-footer">
+                    <SfButton CssClass="e-medium" OnClick="@(async (e) => await DeleteReportBugId())">Delete</SfButton>
+                    <SfButton CssClass="e-medium e-danger" OnClick="Close">Close</SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int reportBugId { get; set; } = 0;
+
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    private async Task DeleteReportBugId()
+    {
+
+        if(reportBugId > 0)
+        {
+            await _reportBugService.DeleteReportBugAsync(reportBugId);
+        }
+
+        await _modalInstance.CloseAsync(ModalResult.Ok<int>(reportBugId));
+    }
+
+
+}

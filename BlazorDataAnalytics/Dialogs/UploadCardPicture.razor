@@ -1,0 +1,77 @@
+﻿@using Azure.Security.KeyVault.Secrets
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.BlobStorageService
+@using Syncfusion.Blazor.Data
+@using Microsoft.Azure.KeyVault;
+@using Microsoft.Azure.KeyVault.Models;
+@using Microsoft.IdentityModel.Clients.ActiveDirectory;
+@using BlazorDataAnalytics.Services.Utility.FileUtility;
+
+@inject IBlobStorageService _blobStoreageServices
+
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050;max-width: 80%">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Upload Card Picture</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <SfSpinner @bind-Visible="showSpinner">
+             </SfSpinner>
+            <SfUploader @ref="UploadObj" ID="UploadFiles" AllowedExtensions=".png, .jpg, .jpeg, .img" AllowMultiple=false AutoUpload=false>
+               <UploaderAsyncSettings SaveUrl="api/File/UploadCardPicture"></UploaderAsyncSettings>
+                <UploaderEvents FileSelected="@OnFileSelected"></UploaderEvents>
+            </SfUploader>
+
+        </div>
+    </div>
+</div>
+
+
+@code {
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int reportDBID { get; set; }
+
+    SfUploader UploadObj; 
+
+    private bool showSpinner { get; set; }
+
+
+
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+    }
+
+
+    private void OnFileSelected(SelectedEventArgs args) 
+    {
+        args.CustomFormData = new List<object> { new { ReportDBID = reportDBID.ToString() } }; 
+    } 
+}
+
+

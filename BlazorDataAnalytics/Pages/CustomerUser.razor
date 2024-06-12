@@ -1,0 +1,221 @@
+﻿@using BlazorDataAnalytics.Dialogs
+@using Models
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserSecurityService
+
+@inject IUserSecurityService _userSecurityService
+
+@page "/users"
+
+
+<PageTitle>Users</PageTitle>
+
+ <div class="row col-lg-8 filter-bar" >            
+    <div class="col-lg-12">
+        <h3 style="text-shadow: 1px 1px 5px white;text-align:center;">Users</h3>
+    </div>
+</div>
+<div class="col-lg-12 control-section">
+  <div class="row">
+    <div class="col-4">
+         <SfTextBox Placeholder='User Name' FloatLabelType='@FloatLabelType.Auto' Width="80" @bind-Value="@text"></SfTextBox>
+    </div>
+    <div class="col-md-auto" style="margin-top: 1.5%">
+         <SfButton CssClass="e-medium" OnClick="@(async (e) => await SearchCustomerUser())">Search</SfButton>
+    </div>
+     <div class="col-7" style="margin-top: 1.5%">
+         <SfButton CssClass="e-medium" OnClick="@(async (e) => await AddCustomerUser())">Add</SfButton>&nbsp;
+         <SfButton CssClass="e-medium" OnClick="@(async (e) => await ManageGroupRole())">Manage Group Role</SfButton>
+    </div>
+  </div>
+</div>
+
+<div class="col-lg-12 control-section" style="margin-top:1%;">
+    <div class="content-wrapper">
+        <div class="row">
+            <SfGrid DataSource="@listCustomerUsers" Height="500" Width="100%">
+                <GridColumns>
+                    <GridColumn Field=@nameof(CustomerUserModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="20"></GridColumn>
+                    <GridColumn Field=@nameof(CustomerUserModel.UserName) HeaderText="Username" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(CustomerUserModel.CustomerTenantName) HeaderText="Tenant Name" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(CustomerUserModel.CustomerUserGroupName) HeaderText="GroupName" Width="100"></GridColumn>
+                    <GridColumn Field=@nameof(CustomerUserModel.LastLogin) HeaderText="Last Login" Width="100"></GridColumn>
+                    
+                    <GridColumn  TextAlign="TextAlign.Center" Width="50"> 
+                        <Template> 
+                            @{ 
+                                var customerUserModel = (context as CustomerUserModel); 
+                                <div class="image"> 
+                                      <SfButton IconCss="e-icons e-edit e-btn-icon" CssClass="e-btn-grd" @onclick="async (e) => await EditCustomerUser(customerUserModel)"></SfButton> 
+                                     <SfButton IconCss="e-icons e-delete-row e-btn-icon" CssClass="e-btn-grd"  @onclick="async (e) => await ViewDeleteUser(customerUserModel)"></SfButton>
+                                </div> 
+                            } 
+                        </Template> 
+                    </GridColumn> 
+                </GridColumns>
+            </SfGrid>
+        </div>
+    </div>
+</div>
+
+<CustomerUserDialog @ref="CustomerUserDialog" RefreshPageEventCallBack="RefreshCustomerPage"/>
+<DeleteCustomerUserDialog @ref="DeleteCustomerUserDialog" RefreshPageEventCallBack="RefreshCustomerPage"/>
+<ManageGroupRoleDialog @ref="ManageGroupRoleDialog"/>
+
+@code {
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    CustomerUserDialog CustomerUserDialog;
+    DeleteCustomerUserDialog DeleteCustomerUserDialog;
+    ManageGroupRoleDialog ManageGroupRoleDialog;
+
+    public string text { get; set; }
+
+    private List<CustomerUserModel> listCustomerUsers { get; set; } = new List<CustomerUserModel>();
+
+    private int customerTenantId { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user?.Identity?.Name); 
+
+        if(userNameGroupRolesModel != null)
+        {
+            customerTenantId = userNameGroupRolesModel.CustomerTenantId;
+        }
+
+        await SearchCustomerUser();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await SearchCustomerUser();
+            StateHasChanged();
+        }
+    }
+
+    private async Task SearchCustomerUser()
+    {
+        listCustomerUsers = await _userSecurityService.SearchCustomerUsers(text, customerTenantId);
+        listCustomerUsers = listCustomerUsers.Where(x => x.CustomerTenantId == customerTenantId).ToList();
+        StateHasChanged();
+    }
+
+    private void RefreshCustomerPage(bool refreshParentPage)
+    {
+        if(refreshParentPage)
+        {
+            this.SearchCustomerUser().ConfigureAwait(true);
+            StateHasChanged();
+        }
+    }
+
+    private async Task AddCustomerUser()
+    {
+        CustomerUserModel customerUserModel = new CustomerUserModel();
+        await CustomerUserDialog.OpenDialog(customerUserModel);
+    }
+
+    private async Task EditCustomerUser(CustomerUserModel customerUserModel)
+    {
+        await CustomerUserDialog.OpenDialog(customerUserModel);
+    }
+
+
+    private async Task ViewDeleteUser(CustomerUserModel customerUserModel)
+    {
+        await DeleteCustomerUserDialog.OpenDialog(customerUserModel);
+    }
+
+    private async Task ManageGroupRole()
+    {
+        await ManageGroupRoleDialog.OpenDialog(customerTenantId);
+    }
+
+
+}
+<style> 
+
+    .e-btn-grd{
+        background-color: transparent !important;
+    }
+@@media (min-width:481px)  {    
+    .filter-bar {
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:641px)  {   
+     .filter-bar {
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+@@media (min-width:961px)  {   
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1025px) {    
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1281px) {   
+    .filter-bar {
+    cursor: pointer;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+
+</style> 

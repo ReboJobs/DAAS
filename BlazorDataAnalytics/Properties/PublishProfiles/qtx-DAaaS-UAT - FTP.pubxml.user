@@ -1,0 +1,1444 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+This file is used by the publish/package process of your Web project. You can customize the behavior of this process
+by editing this MSBuild file. In order to learn more about this please visit https://go.microsoft.com/fwlink/?LinkID=208121. 
+-->
+<Project>
+  <PropertyGroup>
+    <TimeStampOfAssociatedLegacyPublishXmlFile />
+    <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA00AEk9nNs0i8jVh7EwWQYwAAAAACAAAAAAAQZgAAAAEAACAAAACuUUZUOa/5ac1dOirXlpZfjbfw/65zUeV5xYfMieY1kAAAAAAOgAAAAAIAACAAAAD3KZty4rDMysk9qDG09uMSbINSqKOo5itnLgq0tammI4AAAACfmwIfv8h8sRoChSiTtZ9a1ILoR4k2TvyWjN/tQt0aenyQfJ3m4VB0tRstZ4ApDOewRn9Npy419nixmKazopBAZmqpaE+JE99LADLAqafF2k8hDgRgTwyTW6tzP9uFwghF4nPXLfTJjgTMTaKi6pMjYGBOYjGZLnobqQAjwLAP20AAAACV04KuKIP5/hJDDDDlRA2SH4gnJ/aswhrSsrsTRkKql0VEo/YeBf1mv+RW5J/mbOHBS0FcOn8A7Bg2YLsaELKh</EncryptedPassword>
+    <_PublishTargetUrl>ftp://waws-prod-sy3-067.ftp.azurewebsites.windows.net/site/wwwroot</_PublishTargetUrl>
+    <History>False|2022-11-02T21:17:36.1027876Z;False|2022-11-03T08:15:11.1799097+11:00;</History>
+    <LastFailureDetails />
+  </PropertyGroup>
+  <ItemGroup>
+    <File Include="appsettings.Development.json">
+      <publishTime>01/11/2022 03:00:58</publishTime>
+    </File>
+    <File Include="appsettings.json">
+      <publishTime>01/11/2022 02:18:21</publishTime>
+    </File>
+    <File Include="appsettings.Production.json">
+      <publishTime>01/11/2022 22:18:16</publishTime>
+    </File>
+    <File Include="appsettings.UAT.json">
+      <publishTime>01/11/2022 03:00:58</publishTime>
+    </File>
+    <File Include="ar/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ar/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ar/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ar/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Azure.Analytics.Synapse.Artifacts.dll">
+      <publishTime>01/09/2020 18:20:58</publishTime>
+    </File>
+    <File Include="Azure.Core.dll">
+      <publishTime>05/04/2022 07:38:56</publishTime>
+    </File>
+    <File Include="Azure.Identity.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Azure.Security.KeyVault.Certificates.dll">
+      <publishTime>12/08/2020 12:01:40</publishTime>
+    </File>
+    <File Include="Azure.Security.KeyVault.Secrets.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Azure.Storage.Blobs.dll">
+      <publishTime>03/05/2022 03:40:50</publishTime>
+    </File>
+    <File Include="Azure.Storage.Common.dll">
+      <publishTime>03/05/2022 03:40:32</publishTime>
+    </File>
+    <File Include="bg/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="bg/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="bg/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="bg/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Blazorade.Core.dll">
+      <publishTime>02/26/2022 17:08:34</publishTime>
+    </File>
+    <File Include="Blazorade.Msal.dll">
+      <publishTime>02/11/2022 22:58:32</publishTime>
+    </File>
+    <File Include="Blazorade.Msal.pdb">
+      <publishTime>02/11/2022 22:58:32</publishTime>
+    </File>
+    <File Include="BlazorBootstrap.dll">
+      <publishTime>09/18/2022 00:56:52</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.deps.json">
+      <publishTime>11/03/2022 08:16:16</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.dll">
+      <publishTime>03/11/2022 08:10:54</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.exe">
+      <publishTime>11/03/2022 08:16:12</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.pdb">
+      <publishTime>11/03/2022 08:16:12</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.runtimeconfig.json">
+      <publishTime>11/03/2022 08:16:13</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.Views.dll">
+      <publishTime>03/11/2022 08:10:54</publishTime>
+    </File>
+    <File Include="BlazorDataAnalytics.Views.pdb">
+      <publishTime>11/03/2022 08:16:12</publishTime>
+    </File>
+    <File Include="Blazored.LocalStorage.dll">
+      <publishTime>05/02/2022 08:25:36</publishTime>
+    </File>
+    <File Include="Blazored.Modal.dll">
+      <publishTime>09/03/2022 12:03:50</publishTime>
+    </File>
+    <File Include="Blazored.SessionStorage.dll">
+      <publishTime>09/10/2021 09:18:04</publishTime>
+    </File>
+    <File Include="Blazored.Toast.dll">
+      <publishTime>09/10/2021 07:15:14</publishTime>
+    </File>
+    <File Include="ca/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ca/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ca/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ca/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="codeverifier.json">
+      <publishTime>10/14/2022 12:30:59</publishTime>
+    </File>
+    <File Include="cs/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="cs/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="cs/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="cs/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="da/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="da/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="da/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="da/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Dax.Formatter.dll">
+      <publishTime>12/05/2022 01:54:54</publishTime>
+    </File>
+    <File Include="de/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="de/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="de/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="de/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="el/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="el/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="el/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="el/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="es/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="es/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="es/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="es/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="et/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="et/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="et/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="et/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="eu/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="eu/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="eu/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="eu/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="fi/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="fi/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="fi/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="fi/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="fr/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="fr/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="fr/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="fr/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="gl/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="gl/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="gl/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="gl/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="he/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="he/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="he/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="he/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hi/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="hi/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hi/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="hi/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hr/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="hr/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hr/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="hr/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hu/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="hu/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="hu/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="hu/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="id/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="id/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="id/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="id/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="IdentityModel.dll">
+      <publishTime>03/25/2021 17:54:34</publishTime>
+    </File>
+    <File Include="IronSnappy.dll">
+      <publishTime>10/28/2020 04:15:30</publishTime>
+    </File>
+    <File Include="it/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="it/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="it/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="it/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ja/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ja/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ja/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ja/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="JsonSubTypes.dll">
+      <publishTime>01/20/2019 00:59:52</publishTime>
+    </File>
+    <File Include="KellermanSoftware.Compare-NET-Objects.dll">
+      <publishTime>12/10/2018 02:06:50</publishTime>
+    </File>
+    <File Include="kk/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="kk/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="kk/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="kk/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ko/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ko/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ko/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ko/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="libman.json">
+      <publishTime>05/10/2022 23:23:24</publishTime>
+    </File>
+    <File Include="lt/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="lt/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="lt/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="lt/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="lv/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="lv/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="lv/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="lv/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.AdomdClient.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.Core.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.Platform.Windows.dll">
+      <publishTime>08/10/2020 10:36:34</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.Tabular.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Microsoft.AnalysisServices.Tabular.Json.dll">
+      <publishTime>08/10/2020 10:47:10</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Authentication.AzureAD.UI.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Authentication.JwtBearer.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Authentication.OpenIdConnect.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Authorization.dll">
+      <publishTime>03/23/2022 03:20:30</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Components.Authorization.dll">
+      <publishTime>03/23/2022 03:21:06</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Components.dll">
+      <publishTime>03/23/2022 03:19:34</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Components.Forms.dll">
+      <publishTime>03/23/2022 03:20:12</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Components.Web.dll">
+      <publishTime>03/23/2022 03:20:28</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication.dll">
+      <publishTime>03/23/2022 03:21:20</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Connections.Abstractions.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Http.Connections.Client.dll">
+      <publishTime>08/20/2022 12:53:26</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Http.Connections.Common.dll">
+      <publishTime>08/20/2022 12:53:02</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll">
+      <publishTime>10/27/2021 08:52:14</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.Metadata.dll">
+      <publishTime>03/23/2022 03:19:40</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.SignalR.Client.Core.dll">
+      <publishTime>08/20/2022 12:56:06</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.SignalR.Client.dll">
+      <publishTime>08/20/2022 12:56:10</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.SignalR.Common.dll">
+      <publishTime>08/20/2022 12:53:08</publishTime>
+    </File>
+    <File Include="Microsoft.AspNetCore.SignalR.Protocols.Json.dll">
+      <publishTime>08/20/2022 12:53:40</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.KeyVault.dll">
+      <publishTime>04/02/2020 06:31:18</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.KeyVault.WebKey.dll">
+      <publishTime>04/02/2020 06:31:14</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.Management.DataFactory.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.SignalR.Common.dll">
+      <publishTime>06/09/2022 13:55:10</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.SignalR.dll">
+      <publishTime>06/09/2022 13:55:10</publishTime>
+    </File>
+    <File Include="Microsoft.Azure.SignalR.Protocols.dll">
+      <publishTime>06/09/2022 13:55:00</publishTime>
+    </File>
+    <File Include="Microsoft.Bcl.AsyncInterfaces.dll">
+      <publishTime>04/15/2020 08:39:12</publishTime>
+    </File>
+    <File Include="Microsoft.Data.SqlClient.dll">
+      <publishTime>09/21/2021 09:59:32</publishTime>
+    </File>
+    <File Include="Microsoft.EntityFrameworkCore.Abstractions.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.EntityFrameworkCore.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.EntityFrameworkCore.Relational.dll">
+      <publishTime>02/24/2022 16:52:56</publishTime>
+    </File>
+    <File Include="Microsoft.EntityFrameworkCore.SqlServer.dll">
+      <publishTime>02/24/2022 16:53:06</publishTime>
+    </File>
+    <File Include="Microsoft.Extensions.Azure.dll">
+      <publishTime>03/09/2021 01:43:56</publishTime>
+    </File>
+    <File Include="Microsoft.Extensions.Caching.Memory.dll">
+      <publishTime>01/15/2022 06:54:16</publishTime>
+    </File>
+    <File Include="Microsoft.Extensions.Features.dll">
+      <publishTime>08/20/2022 12:50:02</publishTime>
+    </File>
+    <File Include="Microsoft.Extensions.Logging.Abstractions.dll">
+      <publishTime>08/20/2022 05:56:40</publishTime>
+    </File>
+    <File Include="Microsoft.Graph.Core.dll">
+      <publishTime>01/09/2021 04:35:00</publishTime>
+    </File>
+    <File Include="Microsoft.Graph.dll">
+      <publishTime>11/24/2021 23:09:28</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Client.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Client.Extensions.Msal.dll">
+      <publishTime>04/22/2021 20:36:04</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.Certificate.dll">
+      <publishTime>08/01/2022 15:36:52</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.dll">
+      <publishTime>08/01/2022 15:27:34</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.MicrosoftGraph.dll">
+      <publishTime>08/01/2022 15:31:22</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.TokenCache.dll">
+      <publishTime>08/01/2022 15:35:16</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.UI.dll">
+      <publishTime>08/01/2022 15:29:28</publishTime>
+    </File>
+    <File Include="Microsoft.Identity.Web.UI.Views.dll">
+      <publishTime>08/01/2022 15:29:48</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Abstractions.dll">
+      <publishTime>05/19/2022 02:42:26</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Clients.ActiveDirectory.dll">
+      <publishTime>03/17/2021 05:53:06</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.JsonWebTokens.dll">
+      <publishTime>03/12/2021 05:50:54</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Logging.dll">
+      <publishTime>03/12/2021 05:52:14</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Protocols.dll">
+      <publishTime>03/12/2021 05:53:56</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Protocols.OpenIdConnect.dll">
+      <publishTime>03/12/2021 06:02:10</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Tokens.dll">
+      <publishTime>03/12/2021 05:57:12</publishTime>
+    </File>
+    <File Include="Microsoft.IdentityModel.Validators.dll">
+      <publishTime>03/12/2021 06:08:24</publishTime>
+    </File>
+    <File Include="Microsoft.JSInterop.dll">
+      <publishTime>03/23/2022 03:17:20</publishTime>
+    </File>
+    <File Include="Microsoft.JSInterop.WebAssembly.dll">
+      <publishTime>02/24/2022 19:57:24</publishTime>
+    </File>
+    <File Include="Microsoft.PowerBI.Api.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.Rest.ClientRuntime.Azure.dll">
+      <publishTime>01/25/2019 11:02:58</publishTime>
+    </File>
+    <File Include="Microsoft.Rest.ClientRuntime.dll">
+      <publishTime>01/01/0001 00:00:00</publishTime>
+    </File>
+    <File Include="Microsoft.Win32.SystemEvents.dll">
+      <publishTime>10/20/2020 05:40:26</publishTime>
+    </File>
+    <File Include="Microsoft.WindowsAzure.Storage.dll">
+      <publishTime>09/15/2018 11:06:20</publishTime>
+    </File>
+    <File Include="MimeTypes.dll">
+      <publishTime>05/26/2021 07:26:16</publishTime>
+    </File>
+    <File Include="MimeTypesMap.dll">
+      <publishTime>06/28/2019 01:22:40</publishTime>
+    </File>
+    <File Include="ms/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ms/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ms/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ms/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Newtonsoft.Json.dll">
+      <publishTime>09/11/2019 11:56:44</publishTime>
+    </File>
+    <File Include="nl/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="nl/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="nl/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="nl/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="no/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="no/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="no/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="no/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Parquet.dll">
+      <publishTime>10/14/2021 21:56:32</publishTime>
+    </File>
+    <File Include="Persistence.Config.pdb">
+      <publishTime>03/11/2022 08:09:50</publishTime>
+    </File>
+    <File Include="pl/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="pl/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="pl/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="pl/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="pt-PT/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="pt-PT/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="pt-PT/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="pt-PT/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="pt/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="pt/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="pt/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="pt/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="RestSharp.dll">
+      <publishTime>07/16/2021 00:51:10</publishTime>
+    </File>
+    <File Include="ro/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ro/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ro/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ro/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ru/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="ru/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="ru/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="ru/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="runtimes/unix/lib/netcoreapp3.0/System.Drawing.Common.dll">
+      <publishTime>10/20/2020 05:49:58</publishTime>
+    </File>
+    <File Include="runtimes/unix/lib/netcoreapp3.1/Microsoft.Data.SqlClient.dll">
+      <publishTime>09/21/2021 09:59:34</publishTime>
+    </File>
+    <File Include="runtimes/win-arm/native/Microsoft.Data.SqlClient.SNI.dll">
+      <publishTime>10/21/2020 05:13:26</publishTime>
+    </File>
+    <File Include="runtimes/win-arm64/native/Microsoft.Data.SqlClient.SNI.dll">
+      <publishTime>10/21/2020 05:13:26</publishTime>
+    </File>
+    <File Include="runtimes/win-x64/native/Microsoft.Data.SqlClient.SNI.dll">
+      <publishTime>10/21/2020 05:13:38</publishTime>
+    </File>
+    <File Include="runtimes/win-x86/native/Microsoft.Data.SqlClient.SNI.dll">
+      <publishTime>10/21/2020 05:13:26</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/net6.0/System.Security.Cryptography.ProtectedData.dll">
+      <publishTime>10/23/2021 10:51:04</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/netcoreapp3.0/Microsoft.Win32.SystemEvents.dll">
+      <publishTime>10/20/2020 05:52:12</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/netcoreapp3.0/System.Drawing.Common.dll">
+      <publishTime>10/20/2020 05:53:02</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/netcoreapp3.0/System.Windows.Extensions.dll">
+      <publishTime>10/20/2020 05:53:36</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/netcoreapp3.1/Microsoft.Data.SqlClient.dll">
+      <publishTime>09/21/2021 09:59:34</publishTime>
+    </File>
+    <File Include="runtimes/win/lib/netstandard2.0/System.Runtime.Caching.dll">
+      <publishTime>11/15/2019 19:53:44</publishTime>
+    </File>
+    <File Include="sk/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="sk/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sk/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="sk/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sl/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="sl/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sl/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="sl/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sr-Cyrl/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="sr-Cyrl/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sr-Cyrl/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="sr-Cyrl/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sr-Latn/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="sr-Latn/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sr-Latn/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="sr-Latn/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sv/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="sv/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="sv/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="sv/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="Syncfusion.Blazor.dll">
+      <publishTime>02/05/2022 18:37:08</publishTime>
+    </File>
+    <File Include="Syncfusion.ExcelExport.Net.dll">
+      <publishTime>02/05/2022 18:30:00</publishTime>
+    </File>
+    <File Include="Syncfusion.Licensing.dll">
+      <publishTime>02/05/2022 18:39:44</publishTime>
+    </File>
+    <File Include="Syncfusion.PdfExport.Net.dll">
+      <publishTime>02/05/2022 18:26:46</publishTime>
+    </File>
+    <File Include="System.Configuration.ConfigurationManager.dll">
+      <publishTime>11/15/2019 19:37:04</publishTime>
+    </File>
+    <File Include="System.Drawing.Common.dll">
+      <publishTime>10/20/2020 05:50:02</publishTime>
+    </File>
+    <File Include="System.IdentityModel.Tokens.Jwt.dll">
+      <publishTime>03/12/2021 05:49:14</publishTime>
+    </File>
+    <File Include="System.IO.Hashing.dll">
+      <publishTime>10/23/2021 10:47:54</publishTime>
+    </File>
+    <File Include="System.IO.Pipelines.dll">
+      <publishTime>04/14/2022 03:49:36</publishTime>
+    </File>
+    <File Include="System.Memory.Data.dll">
+      <publishTime>09/04/2021 02:45:54</publishTime>
+    </File>
+    <File Include="System.Net.WebSockets.WebSocketProtocol.dll">
+      <publishTime>11/30/2018 02:39:18</publishTime>
+    </File>
+    <File Include="System.Runtime.Caching.dll">
+      <publishTime>11/15/2019 19:37:36</publishTime>
+    </File>
+    <File Include="System.Security.Cryptography.ProtectedData.dll">
+      <publishTime>10/23/2021 10:51:04</publishTime>
+    </File>
+    <File Include="System.Security.Permissions.dll">
+      <publishTime>10/20/2020 05:52:36</publishTime>
+    </File>
+    <File Include="System.Text.Json.dll">
+      <publishTime>03/15/2022 03:56:54</publishTime>
+    </File>
+    <File Include="System.Windows.Extensions.dll">
+      <publishTime>10/20/2020 05:53:38</publishTime>
+    </File>
+    <File Include="TemplatePowerBI/PowerBITemplate.pbix">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="th/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="th/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="th/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="th/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="tr/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="tr/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="tr/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="tr/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="uk/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="uk/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="uk/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="uk/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="vi/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="vi/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="vi/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="vi/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="web.config">
+      <publishTime>11/03/2022 08:16:17</publishTime>
+    </File>
+    <File Include="wwwroot/BlazorDataAnalytics.styles.css">
+      <publishTime>03/11/2022 08:10:54</publishTime>
+    </File>
+    <File Include="wwwroot/css/BlazorDataAnalytics.styles.css">
+      <publishTime>10/19/2022 01:47:34</publishTime>
+    </File>
+    <File Include="wwwroot/css/blazored-modal.css">
+      <publishTime>10/14/2022 00:57:25</publishTime>
+    </File>
+    <File Include="wwwroot/css/blazored-toast.css">
+      <publishTime>08/09/2022 23:45:50</publishTime>
+    </File>
+    <File Include="wwwroot/css/bootstrap/bootstrap.min.css">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/bootstrap/bootstrap.min.css.map">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/bootstrap4.css">
+      <publishTime>10/14/2022 00:57:25</publishTime>
+    </File>
+    <File Include="wwwroot/css/material.css">
+      <publishTime>10/14/2022 00:57:26</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/FONT-LICENSE">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/css/open-iconic-bootstrap.min.css">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/fonts/open-iconic.eot">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/fonts/open-iconic.otf">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/fonts/open-iconic.svg">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/fonts/open-iconic.ttf">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/font/fonts/open-iconic.woff">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/ICON-LICENSE">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/open-iconic/README.md">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/css/site.css">
+      <publishTime>05/10/2022 23:23:24</publishTime>
+    </File>
+    <File Include="wwwroot/favicon.ico">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/images/Basware_logo.png">
+      <publishTime>02/11/2022 22:49:43</publishTime>
+    </File>
+    <File Include="wwwroot/images/Chris21-Logo.png">
+      <publishTime>03/11/2022 01:16:38</publishTime>
+    </File>
+    <File Include="wwwroot/images/connect-white.svg">
+      <publishTime>10/11/2022 23:00:41</publishTime>
+    </File>
+    <File Include="wwwroot/images/Cornerstone_logo.png">
+      <publishTime>03/11/2022 00:54:20</publishTime>
+    </File>
+    <File Include="wwwroot/images/Csv_logo.png">
+      <publishTime>02/11/2022 22:49:43</publishTime>
+    </File>
+    <File Include="wwwroot/images/disconnect-white.svg">
+      <publishTime>10/11/2022 23:00:41</publishTime>
+    </File>
+    <File Include="wwwroot/images/Dynamics_365_Logo.png">
+      <publishTime>03/11/2022 01:01:23</publishTime>
+    </File>
+    <File Include="wwwroot/images/Ecase_logo.png">
+      <publishTime>03/11/2022 00:26:12</publishTime>
+    </File>
+    <File Include="wwwroot/images/Epicor_logo.png">
+      <publishTime>02/11/2022 22:49:43</publishTime>
+    </File>
+    <File Include="wwwroot/images/Icare_logo.png">
+      <publishTime>03/11/2022 00:43:32</publishTime>
+    </File>
+    <File Include="wwwroot/images/Kronos_Incorporated_logo.png">
+      <publishTime>02/11/2022 22:49:43</publishTime>
+    </File>
+    <File Include="wwwroot/images/menu.png">
+      <publishTime>10/19/2022 01:47:34</publishTime>
+    </File>
+    <File Include="wwwroot/images/No-image-available.png">
+      <publishTime>10/25/2022 07:41:46</publishTime>
+    </File>
+    <File Include="wwwroot/images/NoPreview.png">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/images/Nursecall-Logo.png">
+      <publishTime>03/11/2022 01:08:52</publishTime>
+    </File>
+    <File Include="wwwroot/images/Roubler_logo.png">
+      <publishTime>03/11/2022 00:44:50</publishTime>
+    </File>
+    <File Include="wwwroot/images/Salesforce-Logo.png">
+      <publishTime>03/11/2022 00:58:46</publishTime>
+    </File>
+    <File Include="wwwroot/images/Snowflake_logo.png">
+      <publishTime>03/11/2022 00:17:31</publishTime>
+    </File>
+    <File Include="wwwroot/images/Workday_logo.png">
+      <publishTime>02/11/2022 22:49:43</publishTime>
+    </File>
+    <File Include="wwwroot/images/Xero_logo.png">
+      <publishTime>03/11/2022 00:15:37</publishTime>
+    </File>
+    <File Include="wwwroot/js/blazored.modal.js">
+      <publishTime>10/14/2022 00:57:26</publishTime>
+    </File>
+    <File Include="wwwroot/js/bootstrap.bundle.min.js">
+      <publishTime>10/14/2022 00:57:26</publishTime>
+    </File>
+    <File Include="wwwroot/js/hub.js">
+      <publishTime>05/10/2022 23:23:24</publishTime>
+    </File>
+    <File Include="wwwroot/js/powerbi.min.js">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/js/script.js">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/js/signalr/dist/browser/signalr.js">
+      <publishTime>05/10/2022 23:23:24</publishTime>
+    </File>
+    <File Include="wwwroot/js/signalr/dist/browser/signalr.min.js">
+      <publishTime>05/10/2022 23:23:24</publishTime>
+    </File>
+    <File Include="wwwroot/js/syncfusion-blazor.min.js">
+      <publishTime>10/14/2022 00:57:26</publishTime>
+    </File>
+    <File Include="wwwroot/PBIX/DatasetTemplate.pbix">
+      <publishTime>08/09/2022 23:45:50</publishTime>
+    </File>
+    <File Include="wwwroot/salvos.png">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/up-arrow.png">
+      <publishTime>10/18/2022 23:27:50</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazor.Bootstrap/Blazor.Bootstrap.bundle.scp.css">
+      <publishTime>09/17/2022 17:21:30</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazor.Bootstrap/blazor.bootstrap.css">
+      <publishTime>09/13/2022 04:20:38</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazor.Bootstrap/blazor.bootstrap.js">
+      <publishTime>09/18/2022 00:26:42</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazor.Bootstrap/icon/128X128.png">
+      <publishTime>04/19/2022 21:45:42</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazorade.Core/js/blazoradeCore.js">
+      <publishTime>02/25/2022 17:27:36</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazorade.Msal/js/blazoradeMsal.js">
+      <publishTime>08/17/2022 14:45:35</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazored.Modal/blazored-modal.css">
+      <publishTime>09/03/2022 12:03:36</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazored.Toast/blazored-toast.css">
+      <publishTime>09/10/2021 07:15:10</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Blazored.Toast/blazored-toast.min.css">
+      <publishTime>09/10/2021 07:15:10</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Microsoft.AspNetCore.Components.WebAssembly.Authentication/AuthenticationService.js">
+      <publishTime>03/23/2022 03:22:14</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/accordion-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/accumulationchart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/button-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/buttonsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/compression-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/contextmenu-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/data-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/diagrams-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/dialog-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/drawings-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/excelexport-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/fileutils-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/inplaceeditor-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/inputsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/listsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/listview-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/navigationsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/officechart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/pdfexport-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/pdfviewer-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/popup-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/popupsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-accordion-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-accumulation-chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-barcode-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-breadcrumb-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-bullet-chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-calendarbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-circulargauge-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-colorpicker-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-contextmenu-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-dashboard-layout-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-datepicker-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-daterangepicker-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-diagramcomponent-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-dialog-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-documenteditor-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-documenteditorcontainer-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-drop-down-button-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-dropdownlist-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-filemanager-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-gantt-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-grid-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-heatmap-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-import-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-import-ie-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-import-script-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-inplaceeditor-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-kanban-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-lineargauge-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-listbox-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-listview-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-maps-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-maskedtextbox-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-menu-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-multiselect-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-numerictextbox-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-pdfviewer-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-pivotview-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-progressbar-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-range-navigator-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-richtexteditor-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-schedule-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-sidebar-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-signature-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-slider-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-smith-chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-sparkline-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-spinner-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-splitter-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-stock-chart-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-svg-export-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-tab-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-textbox-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-timepicker-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-toast-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-toolbar-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-tooltip-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-treegrid-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-treemap-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-treeview-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sf-uploader-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/sortable-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/spinner-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/splitbuttonsbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/svgbase-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/syncfusion-blazor-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/syncfusion-blazor-extended-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/syncfusion-blazor.min.js">
+      <publishTime>02/05/2022 18:35:24</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/textbox-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/toast-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/scripts/tooltip-b5a9f9.min.js">
+      <publishTime>02/05/2022 18:34:52</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/bootstrap-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/bootstrap.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/bootstrap4.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/bootstrap5-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/bootstrap5.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/fabric-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/fabric.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/fluent-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/fluent.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/highcontrast.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/material-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/material.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/tailwind-dark.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="wwwroot/_content/Syncfusion.Blazor/styles/tailwind.css">
+      <publishTime>02/05/2022 17:43:34</publishTime>
+    </File>
+    <File Include="Xero.NetStandard.OAuth2.dll">
+      <publishTime>12/05/2022 03:44:42</publishTime>
+    </File>
+    <File Include="Xero.NetStandard.OAuth2Client.dll">
+      <publishTime>12/05/2022 03:53:38</publishTime>
+    </File>
+    <File Include="zh-HANS/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="zh-HANS/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="zh-HANS/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="zh-HANS/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="zh-HANT/Microsoft.AnalysisServices.AdomdClient.resources.dll">
+      <publishTime>08/10/2020 10:36:38</publishTime>
+    </File>
+    <File Include="zh-HANT/Microsoft.AnalysisServices.Core.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+    <File Include="zh-HANT/Microsoft.AnalysisServices.resources.dll">
+      <publishTime>08/10/2020 10:47:14</publishTime>
+    </File>
+    <File Include="zh-HANT/Microsoft.AnalysisServices.Tabular.resources.dll">
+      <publishTime>08/10/2020 10:47:12</publishTime>
+    </File>
+  </ItemGroup>
+</Project>

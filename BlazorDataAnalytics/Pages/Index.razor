@@ -1,0 +1,1304 @@
+﻿@page "/"
+@using BlazorDataAnalytics.Data
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services
+@using Blazorade.Msal.Services
+@using Microsoft.Identity.Client
+@using Microsoft.PowerBI.Api
+@using Microsoft.PowerBI.Api.Models
+@using Microsoft.Rest
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Lists
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Persistence.Config.Entities
+@using Syncfusion.Blazor.Grids
+@using BlazorDataAnalytics.Models
+@using Syncfusion.Blazor.Navigations
+@using BlazorDataAnalytics.Services.ReportService
+@using BlazorDataAnalytics.Services.ApiClientService
+@using BlazorDataAnalytics.Services.UserReportCardImageService
+@using BlazorDataAnalytics.Services.ReportDashboardService
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using BlazorDataAnalytics.Services.UserService
+@using BlazorDataAnalytics.Services.BookMarkService
+@using BlazorDataAnalytics.Services.LikeService
+@using Syncfusion.Blazor.Buttons
+@using BlazorDataAnalytics.Services.LogService
+@using System.IdentityModel.Tokens.Jwt
+@using Newtonsoft.Json
+@using BlazorDataAnalytics.Dialogs;
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration _configuration
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager UriHelper
+@inject IApiClientService _apiClientService
+@inject IUserReportCardImageService _userReportCardImageService
+@inject IReportDashboardService _reportDashboardService
+@inject IUserSecurityService _userSecurityService
+@inject IUserService _userService
+@inject IBookmarkService _bookmarkService
+@inject IReportService _reportService
+@inject BlazorDataAnalytics.Data.FilterState filterstate
+@inject ILikeService _likeService
+@inject ILogService _logService
+
+
+<PageTitle>Qualiticks Data as a Service</PageTitle>
+
+<BlazorDataAnalytics.Dialogs.MessageBoxDialog @ref="MessageDialog" />
+<div class="control-section" style="text-align: -webkit-center;">
+    
+@if (isNoWorkspace)
+{
+  <div class="container my-4">
+      
+   <hr class="mt-5">
+
+    <p>Your environment is still not setup. Please, reach out our friendly support team at <a href="mailto:DAaaS-Support@qualiticks.com">DAaaS-Support@qualiticks.com</a></p>
+
+   <hr class="mt-5">
+
+  </div>
+}
+else
+{
+
+        
+             <div class="row col-lg-8 filter-bar" >
+                 <div class="col-lg-3">
+                    
+                </div>
+            
+                <div class="col-lg-2">
+                    <SfTextBox Placeholder="Search" @bind-Value="@reportName" ValueChange="@ValueChangeHandler"></SfTextBox>
+                </div>
+                <div class="col-lg-2 sb-property-border">
+                    <SfMultiSelect TValue="string[]" TItem="TagModel" AllowFiltering="true"  Placeholder="Tag" Mode="@VisualMode.CheckBox" DataSource="@tagModels" ShowSelectAll="true" EnableSelectionOrder="true" ShowDropDownIcon="true" FilterBarPlaceholder="Tags" PopupHeight="350px" PopupWidth="200px">
+                        <MultiSelectEvents TValue="string[]" TItem="TagModel" ValueChange="@TagValueChangeHandler"></MultiSelectEvents>
+                        <MultiSelectFieldSettings Text="TagName" Value="Code"></MultiSelectFieldSettings>
+                    </SfMultiSelect>
+            
+                </div>
+                <div class="col-lg-2">
+                     <SfDropDownList TValue="String" TItem="BookmarkModel" Placeholder="Bookmarks" DataSource="@bookmarkModels">
+                        <DropDownListEvents TItem="BookmarkModel" TValue="String" ValueChange="@BookmarkChangeHandler"></DropDownListEvents>
+                        <DropDownListFieldSettings Value="Id" Text="Title"></DropDownListFieldSettings>
+                    </SfDropDownList>  
+                </div>
+
+                  <div class="col-lg-1" style="text-align:right;margin-left">
+                   @*  <SfSwitch @bind-Checked="isChecked"  CssClass="square custom-switch handle-text"></SfSwitch>*@
+                     <SfDropDownList TValue="String" TItem="String" Placeholder="Style" DataSource="@styleModels">
+                        <DropDownListEvents TItem="String" TValue="String" ValueChange="@StyleChangeHandler"></DropDownListEvents>
+                        <DropDownListFieldSettings Value="Text" Text="Text"></DropDownListFieldSettings>
+                    </SfDropDownList>  
+                </div>  
+            </div>
+        
+  
+
+<div class="control-section">
+    <div class="row" style="place-content: center">
+@*         <SfSpinner @bind-Visible="showSpinner">
+        </SfSpinner>*@
+        @if (isChecked == true)
+        {
+            @foreach (var item in reportModels)
+            {
+                <div class="col-xs-3 col-sm-3 col-lg-3 col-md-3 m-lg-3 mr-3">
+                    <SfCard CssClass="card">
+                        <CardHeader>
+                            <SfButton CssClass="e-link" Content="@item.Name" OnClick="@(async (e) => await GoToReport(@item,"false","false"))"></SfButton>
+                        </CardHeader>
+                        <CardContent Content="@item.Description" />
+             @*           <a href="@item.WebUrl">
+                            <CardImage Image="@item.EmbedUrl">
+                            </CardImage>
+                        </a>*@
+                          <SfButton CssClass="e-link"  OnClick="@(async (e) => await GoToReport(@item,"false","false"))">
+                             <CardImage Image="@item.EmbedUrl">
+                            </CardImage>
+                          </SfButton>
+                        <CardFooter>
+                            <CardFooterContent>
+                                <div style="float: left">
+@*                                    <SfIcon IconCss="oi oi-chat" Title="Comments" Size="IconSize.Medium"></SfIcon>*@
+
+                                    @if (item.IsBookMark == true) { 
+                                        <SfButton IconCss="oi oi-bookmark" CssClass="e-link" Title="Bookmark" Size="IconSize.Large" OnClick="@(async (e) => await AddBookmark(item.Name,true))"></SfButton>
+                                    } else
+                                    {
+                                        <SfButton IconCss="oi oi-bookmark" CssClass="e-custom" Title="Bookmark" Size="IconSize.Large" OnClick="@(async (e) => await AddBookmark(item.Name,false))"></SfButton>
+                                    }
+
+                                    <SfButton IconCss="oi oi-thumb-up" CssClass="e-link" Title="Like" Size="IconSize.Large" OnClick="@(async (e) => await AddSubLikeDislike(true,item.Name))"></SfButton>
+                                    <label>@item.CntLike</label>
+                                    <SfButton IconCss="oi oi-thumb-down" CssClass="e-link" Title="Dislike" Size="IconSize.Large" OnClick="@(async (e) => await AddSubLikeDislike(false,item.Name))"></SfButton>
+                                    <label>@item.CntDislike</label>
+                                    <SfButton  IconCss="oi oi-tags"  CssClass="e-link" Title="@item.TagDashBoard"></SfButton>
+
+                                    @if (item.IsAdmin == true)
+                                    {
+                                        <SfButton IconCss="oi oi-pencil" CssClass="e-link" Title="Edit" Size="IconSize.Large" OnClick="@(async (e) => await GoToReport(@item,"true","false"))"></SfButton>
+                                        <SfButton IconCss="oi oi-circle-x" CssClass="e-link" Title="Delete" Size="IconSize.Large" OnClick="@(async (e) => await OnBtnClick(@item))"></SfButton>
+                                    }
+
+                                </div>
+@*                                <div style="float: right; vertical-align: central" class="newIcon">NEW</div>*@
+                            </CardFooterContent>
+                        </CardFooter>
+                    </SfCard>
+
+                </div>
+            }
+        }else
+        {
+
+            <SfGrid DataSource="@dataModels">
+                <GridEditSettings AllowEditing="false" AllowAdding="false" AllowDeleting="false"></GridEditSettings>
+                <GridEvents RowSelecting="RowSelectingHandler"  TValue="DataModel"></GridEvents>
+                <GridColumns>
+                    @foreach (var prop in typeof(DataModel).GetProperties())
+                    {
+                        <GridColumn Field="@prop.Name" AllowEditing="@prop.CanRead"></GridColumn>
+                    }
+                </GridColumns>
+            </SfGrid>
+
+        }
+    </div>
+</div>
+        <SfDialog Target="#target" Width="600px" ShowCloseIcon="true" @bind-Visible="Visibility" AllowPrerender="true" IsModal="true">
+            <DialogTemplates>
+                <Header> Delete Report</Header>
+                <Content>
+                    <div class="row">
+                           <div class="container">
+                                      <div class="alert alert-danger">
+                                        <p style="font-size:1rem;">
+                                         This action will physically delete the report from the PowerBI workspace. 
+                                       <span style="font-weight:bold;">Would you like to continue? This action cannot be undone!</span></p>                                                
+                                      <SfProgressButton Content="@Content" EnableProgress="true" CssClass="@CssClass" IconCss="e-icons e-delete e-small camera" >
+                                            <ProgressButtonEvents OnBegin="Begin" OnEnd="End"></ProgressButtonEvents>
+                                        </SfProgressButton>
+                               </div>
+                            </div> 
+                    </div>
+                </Content>
+            </DialogTemplates>
+        </SfDialog>
+}
+
+</div>
+
+@if (isNoReports)
+{
+  <div class="container my-4">
+      
+   <hr class="mt-5">
+
+    <p>There no reports available. Please, contact Admin for support.</p>
+
+   <hr class="mt-5">
+
+  </div>
+}
+
+
+@code
+{
+    MessageBoxDialog MessageDialog;
+    private IList<Report>? _reports;
+    private IList<Report> _filterReports;
+    private IList<Dashboard>? _dashBoards;
+    private IList<Bookmark>? _bookmarks;
+    private IList<Group>? _group;
+    private ReportModel subjectForDelete { get; set; }
+    private bool Visibility { get; set; }
+    public string Content = "Delete";
+    public string CssClass = "e-hide-spinner";
+    private IEnumerable<Claim> _claims = Enumerable.Empty<Claim>();
+    private ElementReference powerBIElement;
+    public IModalService Modal { get; set; }
+    private Reports _report;
+    private PowerBIClient _client;
+    private PowerBIEmbedConfig _result;
+    private ReportInDashboard _dboard = new ReportInDashboard();
+    private UserTrack userTrack = new UserTrack();
+    private Persistence.Config.Entities.User? userDaas = new Persistence.Config.Entities.User();
+    private UserNameGroupRolesModel userNameGroupRolesModel = new UserNameGroupRolesModel();
+
+    private List<DataModel> dataModels = new List<DataModel>();
+    private List<BookmarkModel> bookmarkModels = new List<BookmarkModel>();
+    private List<ReportModel>? reportModels = new List<ReportModel>();
+    private List<TagModel>? tagModels = new List<TagModel>();
+    private List<ReportModel>? reportFilterModels = new List<ReportModel>();
+    private List<DataModel> dataFilterModels = new List<DataModel>();
+    private List<String> styleModels = new List<String>();
+
+
+    private Guid _workspaceId, _reportId;
+    private int _customerTenantId;
+
+    private bool isChecked = true;
+    private bool showSpinner = true;
+    private int countDBoard = 0;
+
+    private bool showSelectAllCheckBox { get; set; } = true;
+    private bool enableSelectionOrders { get; set; } = true;
+    private bool enableDropDownIcon { get; set; } = true;
+    private bool checkSelectAll { get; set; } = true;
+    private bool dropDownButton { get; set; } = true;
+    private bool selectionReorder { get; set; } = true;
+    private bool isNoWorkspace { get; set; } = false;
+    private bool isNoReports { get; set; } = false;
+    private bool visibility { get; set; }
+
+    private string userId { get; set; }
+    private string reportName { get; set; }
+    public string clientIPAddr { get; private set; }
+    private string authMessage { get; set; }
+    private object ipaddress { get; set; }
+
+    private string browser { get; set; }
+    private string[] tagArguments { get;  set; }
+    private string userNameIdentity { get; set; }
+
+    protected string userName { get; set; }
+    private string userEmail { get; set; }
+    private string curUrl;
+
+    public bool ShowItem = true;
+
+    void ShowHideItemClick()
+    {
+        ShowItem = !ShowItem;
+    }
+    private async Task DeleteDashboard()
+    {
+
+        if(subjectForDelete != null)
+        {
+            try
+            {
+                await _reportService.DeleteReportAsync(subjectForDelete.Id);
+
+                var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+
+                var message = "Deleted Report :" + subjectForDelete.Name;
+                var log = new LogModel { Date =  System.DateTime.Now, UserEmail = user.Identity.Name, Message = message, Module = "Dataset"  };
+                await _logService.Log(log);
+
+                PowerBIClient _client;
+                PowerBIEmbedConfig _result;
+                AuthenticationResult authenticationResult = null;
+                authenticationResult = await DoAuthentication();
+
+                var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+                _result = new PowerBIEmbedConfig();
+                _client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+                _client.Reports.DeleteReport(_workspaceId, subjectForDelete.Id);
+            }
+            catch (Exception ex) { }
+        }
+        this.Visibility = !this.Visibility;
+
+        //  reportModels = reportModels.Where(x => x.Id != subjectForDelete.Id).ToList();
+        UriHelper.NavigateTo($"/", true);
+        StateHasChanged();
+    }
+
+    private async Task OnBtnClick(ReportModel _report)
+    {
+        this.Visibility = !this.Visibility;
+        if(this.Visibility ){
+
+            subjectForDelete = _report;
+        }
+
+    }
+    public void Begin(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        Content = "Deleting...";
+        CssClass = "e-hide-spinner e-info border-radius";
+    }
+    public async Task End(Syncfusion.Blazor.SplitButtons.ProgressEventArgs args)
+    {
+        await DeleteDashboard();
+        Content = "Deleted";
+        CssClass = "e-hide-spinner e-success border-radius";
+        await Task.Delay(1000);
+        Content = "Delete";
+        CssClass = "e-hide-spinner border-radius";
+
+    }
+    public void RowSelectingHandler(RowSelectingEventArgs<DataModel> args)
+    {
+        var reporModel = reportModels.FirstOrDefault(x => x.Name == args.Data.Name);
+        if(reporModel != null)
+        {
+            if(reporModel.ReportType.Contains("Dashboard"))
+            {
+                UriHelper.NavigateTo($"/reports/{_workspaceId}/{reporModel.Id}/false/true");
+            }
+            else
+            {
+                UriHelper.NavigateTo($"/reports/{_workspaceId}/{reporModel.Id}/false/false");
+            }
+        }
+    }
+
+    private const string AuthorityFormat = "https://login.microsoftonline.com/94e6b5f2-d1da-4de9-a4ca-88cfdb6c3de0/v2.0";
+    private const string MSGraphScope = "https://analysis.windows.net/powerbi/api/.default";
+    private async Task<AuthenticationResult> DoAuthentication()
+    {
+        IConfidentialClientApplication daemonClient;
+        daemonClient = ConfidentialClientApplicationBuilder.Create(_configuration.GetSection("AzureAd:ClientId").Value)
+            .WithAuthority(string.Format(AuthorityFormat, _configuration.GetSection("AzureAd:TenantId").Value))
+            .WithClientSecret(_configuration.GetSection("AzureAd:ClientSecret").Value)
+            .Build();
+
+        AuthenticationResult authResult = await daemonClient.AcquireTokenForClient(new[] { MSGraphScope }).ExecuteAsync();
+        return authResult;
+    }
+
+
+    public async Task TagValueChangeHandler(MultiSelectChangeEventArgs<string[]> args) 
+    {
+        showSpinner = true;
+        reportModels = new List<ReportModel>();
+        List<ReportModel> newReportFilterModels = new List<ReportModel>();
+
+        if (args.Value != null)
+        {
+            tagArguments = args.Value;
+            foreach (var arg in args.Value)
+            {
+                if (string.IsNullOrEmpty(reportName))
+                {
+                    newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(arg)).ToList();
+                    if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+                    {
+                        reportModels.AddRange(newReportFilterModels);                       
+                    }
+                }
+                else
+                {
+                    newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(arg) && x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+                    if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+                    {
+                        reportModels.AddRange(newReportFilterModels);                       
+                    }
+                }
+            }
+        }
+        else
+        {
+            tagArguments =  new string[] {};
+            reportModels = reportFilterModels;
+        }
+        showSpinner = false;
+    }
+
+
+    public async Task ValueChangeHandler(ChangedEventArgs args) 
+    {
+        showSpinner = true;
+        reportModels = new List<ReportModel>();
+        List<ReportModel> newReportFilterModels = new List<ReportModel>();
+
+        if(tagArguments != null)
+        {
+            if(tagArguments.Any())
+            {
+                foreach (var tagArg in tagArguments)
+                {
+                    if (string.IsNullOrEmpty(reportName))
+                    {
+                        newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(tagArg)).ToList();
+                        if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+                        {
+                            reportModels.AddRange(newReportFilterModels);                       
+                        }
+                    }
+                    else
+                    {
+                        newReportFilterModels = reportFilterModels.Where(x => x.Tag.Contains(tagArg) && x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+                        if(newReportFilterModels.Any() && !reportModels.Any(x => newReportFilterModels.Any(a => a.Name == x.Name)))
+                        {
+                            reportModels.AddRange(newReportFilterModels);                       
+                        }
+                    }
+                }
+            }
+            else
+            {
+                reportModels = reportFilterModels.Where(x => x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();
+            }
+
+        }     
+        else
+        {
+            if (!string.IsNullOrEmpty(reportName))
+            {
+                reportModels = reportFilterModels.Where(x => x.Name.ToUpper().Contains(reportName.ToUpper())).ToList();;
+            }
+            else
+            {
+                reportModels = reportFilterModels;  
+            }
+        }
+        showSpinner = false;
+
+    }
+
+    public interface ICloneable<T>
+    {
+        T Clone();
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        filterstate.OnChange += StateHasChanged;
+        styleModels.Add("Card");
+        styleModels.Add("List");        
+        await InitializePowerBiReportsAndDashboards();
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+
+            showSpinner = true;
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            userTrack =  await _apiClientService.GetUserIPAsync();
+
+            if (user.Identity.IsAuthenticated)
+            {
+                authMessage = $"{user.Identity.Name} is authenticated.";
+                _claims = user.Claims;
+                userName = _claims?.FirstOrDefault(x => x.Type.Equals("name", StringComparison.OrdinalIgnoreCase))?.Value;
+                userEmail = _claims?.FirstOrDefault(x => x.Type.Equals("preferred_username", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            }
+            else
+            {
+                authMessage = "The user is NOT authenticated.";
+            }
+
+
+            userTrack.Browser = string.Empty;
+            userTrack.Browser = string.Empty;
+            userTrack.DateTimeLog = DateTime.Now;
+            userTrack.UserName = userName;
+            userTrack.UserEmail = userEmail;
+            userTrack.ReportName = "";
+            userTrack.Page= "index";
+
+            using (var db = new DataAnalyticsDBContext())
+            {
+                try
+                {
+                    db.Add(userTrack);
+
+                    db.SaveChanges();
+                }
+                catch (Exception ex)
+                {
+
+                    Console.WriteLine( "\nError Message ---\n{0}", ex.Message );
+                }
+
+            }
+            showSpinner = false;
+        }
+    }
+
+    private async Task ReportChangeHandler(ChangeEventArgs<Guid, Report> args)
+    {
+        _reportId = args.ItemData.Id;
+
+        var generateTokenRequestParameters = new GenerateTokenRequest(accessLevel: "view");
+        var tokenResponse = _client.Reports.GenerateTokenAsync(new Guid(_workspaceId.ToString()), new Guid(_reportId.ToString()), generateTokenRequestParameters).Result;
+
+        _result.EmbedToken = tokenResponse;
+        _result.EmbedUrl = args.ItemData.EmbedUrl;
+        _result.Id = args.ItemData.Id.ToString();
+        await Interop.CreateReport(JSRuntime, powerBIElement, tokenResponse.Token, args.ItemData.EmbedUrl, args.ItemData.Id.ToString());
+    }
+
+    private async Task AddSubLikeDislike(bool Like,string Name)
+    {
+
+        var userModel = new UserModel
+        {
+            userName = userTrack.UserName,
+            Email = userTrack.UserEmail
+        };
+
+        _dboard.Title = Name;
+
+        try
+        {
+            var objUser =  await _userService.GetUsersName(userTrack.UserName);
+
+            if (objUser == null)
+            {
+                await _userService.UpsertUserAsync(userModel);
+            }
+
+            var reportInDashboards = await _reportDashboardService.GetReportsInDashboardByTenantId(_customerTenantId,await GetCustomerTenantSid());
+            var objDaas = reportInDashboards.FirstOrDefault(c => c.Title == _dboard.Title); 
+
+            if (objDaas == null)
+            {
+                var customerUserRole = new CustomerUserRole
+                {
+                    CustomerTernantId = _customerTenantId,
+                    Description = $"View {objDaas.Title} Report",
+                    UserRoleName = objDaas.Title,
+                    IsActive = true,
+                };
+
+                string reportRoleCode = await _userSecurityService.InsertCustomerUserRoleByName(customerUserRole);
+                await _reportDashboardService.UpsertReportInDashboard(objDaas.Title, objDaas.ReportPowerBiId, reportRoleCode);
+            }
+
+            var user = await _userService.GetUsers(userEmail);
+
+            var likeModel = new LikeModel
+            {
+                UserId = user.userID,
+                ReportDbid = objDaas.ReportDbId,
+                Title = _dboard.Title,
+                IsLike = Like,
+                CustomerTenantID = _customerTenantId,
+            };
+
+            await _likeService.UpsertLikeAsync(likeModel);
+
+            var objLikes = new List<LikeModel>();
+            var objDisLikes = new List<LikeModel>();
+            var _countDislike = 0;
+            var _countLike = 0;
+
+            var likeMod = await _likeService.GetLikesInDashboardByReportDbId(objDaas.ReportDbId,_customerTenantId);
+
+            objLikes = likeMod.Where(c => c.Title == Name && c.IsLike == true && c.CustomerTenantID == _customerTenantId).ToList();
+            _countLike = objLikes.Count;
+
+            objDisLikes = likeMod.Where(c => c.Title == Name && c.IsLike == false && c.CustomerTenantID == _customerTenantId).ToList();
+            _countDislike = objDisLikes.Count;
+
+            if (reportModels != null)
+            {
+                foreach(var obj in reportModels)
+                {
+                    if(obj.Name == Name)
+                    {
+                        obj.CntLike = _countLike;
+                        obj.CntDislike = _countDislike;
+                        break;
+                    }
+                }
+            }
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine("\nError Message ---\n{0}", ex.Message);
+        }
+    }
+
+    private async Task AddBookmark(string Name,bool isActive)
+    {
+
+        var searchUserModel = new UserModel
+        {
+            userName = userTrack.UserName ?? string.Empty
+        };
+
+        var searchDashboardModel = new ReportDashboardModel
+        {
+            Title = Name
+        };
+
+        var objUser =  await _userService.GetUsersName(searchUserModel.userName);
+        var dbBoard  = await _reportDashboardService.GetReportsInDashboardByTitle(searchDashboardModel.Title);
+
+        var searchBookmarkModel = new BookmarkModel
+        {
+            Title = Name,
+            UserId = objUser.userID,
+            ReportDbid = dbBoard.ReportDbId,
+            IsActive = isActive
+        };
+
+
+        try
+        {
+            var bookMark = await _bookmarkService.UpsertBookmark(searchBookmarkModel);
+
+
+            bookmarkModels = await _bookmarkService.GetBookmarksByUserAndIsActive(searchBookmarkModel);
+
+            var reportInDashboards = await _reportDashboardService.GetReportsInDashboardByTenantId(_customerTenantId,await GetCustomerTenantSid());
+
+            if (reportModels != null)
+            {
+                foreach(var obj in reportModels)
+                {
+                    var reportBoard = reportInDashboards.FirstOrDefault(x => x.ReportPowerBiId == obj.Id); 
+
+                    var bookMarkperReport = await _bookmarkService.GetBookmarkInDashboardByReportDbIdAndUserId(reportBoard.ReportDbId,objUser.userID);
+
+                    if(obj.Name == Name)
+                    {
+                        obj.IsBookMark = bookMarkperReport == null ? false :bookMarkperReport.IsActive;
+                        break;
+                    }
+                }
+
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+            Console.WriteLine("\nError Message ---\n{0}", ex.Message);
+        }
+        StateHasChanged();
+
+    }
+    private async Task StyleChangeHandler(Syncfusion.Blazor.DropDowns.ChangeEventArgs<String, String> args)
+    {
+        if (args.Value == "Card")
+        {
+
+            isChecked = true;
+        }
+        else
+        {
+            isChecked = false;
+        }
+
+    }
+    private async Task BookmarkChangeHandler(Syncfusion.Blazor.DropDowns.ChangeEventArgs<String, BookmarkModel> args)
+    {      
+        _report = await _client.Reports.GetReportsInGroupAsync(_workspaceId);
+        _reports = _report.Value;
+
+
+        Report clientReport = _reports.Where(c=>c.Name == args.ItemData.Title).SingleOrDefault();
+        ReportModel reportModel = new ReportModel()
+            {
+                Id = clientReport.Id,
+                Name = clientReport.Name,
+                DatasetId = clientReport.DatasetId,
+                AppId = clientReport.AppId,
+                Description = clientReport.Description,
+                ReportType = clientReport.ReportType,
+                WebUrl = clientReport.WebUrl,
+                EmbedUrl = clientReport.EmbedUrl,
+            };
+
+        await GoToReport(reportModel, "false", "false");
+    }
+
+    private async Task GoToDashboard(Dashboard dashboard,string editable = "false",string isdashboard="false")
+    {
+        UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{dashboard.Id}/{editable}/{isdashboard}");
+    }
+
+
+    private async Task GoToReport(ReportModel report,string editable = "false",string isdashboard="false")
+    {
+        if (report.ReportType.Contains("Dashboard"))
+        {
+            isdashboard = "true";
+            UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{report.Id}/{editable}/{isdashboard}");
+        }else
+        {
+            UriHelper.NavigateTo($"/reports/{_workspaceId.ToString()}/{report.Id}/{editable}/{isdashboard}");
+        }
+        filterstate.SetFilterShow(report.WebUrl);
+    }
+
+    public async Task<string> GetCustomerTenantSid()
+    {
+        string resource = "https://management.azure.com";
+        var clientId = _configuration.GetSection("AzureAd:ClientId").Value;
+        var secret = _configuration.GetSection("AzureAd:ClientSecret").Value;
+        var oauthUrl = _configuration.GetSection("AzureAd:Instance").Value + _configuration.GetSection("workSpaceId").Value + "/oauth2/token";
+        var content = new FormUrlEncodedContent(new Dictionary <string, string> {
+                                      { "client_id", clientId},
+                                      { "client_secret", secret},
+                                      { "grant_type", "client_credentials" },
+                                      { "resource", resource},
+                                      { "scope", "user_impersonation"}
+                                    });
+
+        var httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, new Uri(oauthUrl))
+                            {
+                                Content = content
+                            };
+
+        var _httpClient = new HttpClient();
+        using (var response = await _httpClient.SendAsync(httpRequestMessage))
+        {
+            if (response.IsSuccessStatusCode)
+            {
+                var responseStream = await response.Content.ReadAsStringAsync();
+
+                AnalyticsTokenModel analyticsToken = JsonConvert.DeserializeObject<AnalyticsTokenModel>(responseStream);
+
+                var handler = new JwtSecurityTokenHandler();
+                var jsonToken = handler.ReadToken(analyticsToken.access_token);
+                var tokenS = jsonToken as JwtSecurityToken;
+
+                if (tokenS.Claims.First(claim => claim.Type == "groups") != null)
+                {
+                    return tokenS.Claims.First(claim => claim.Type == "groups").Value;
+                } 
+
+            }
+        }
+
+        return "";
+    }
+
+    private async Task InitializePowerBiReportsAndDashboards()
+    {
+        showSpinner = true;
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userNameIdentity = user?.Identity?.Name;
+
+        userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(userNameIdentity); 
+
+        if(userNameGroupRolesModel.WorkspaceId == Guid.Empty)
+        {
+            showSpinner = false;
+            isNoWorkspace = true;
+            return;
+        }
+
+        AuthenticationResult authenticationResult = null;
+        authenticationResult = await DoAuthentication();
+        var tokenCredentials = new TokenCredentials(authenticationResult.AccessToken, "Bearer");
+
+        _result = new PowerBIEmbedConfig();
+        _reports = new List<Report>();
+        _client = new PowerBIClient(new Uri("https://api.powerbi.com/"), tokenCredentials);
+
+        _workspaceId = userNameGroupRolesModel.WorkspaceId; //new Guid("c0c75e4f-c69b-4b0f-a7a5-855c5ebcd6da"); // Aged Care Demos workspace
+        _customerTenantId = userNameGroupRolesModel.CustomerTenantId;
+        _report = await _client.Reports.GetReportsInGroupAsync(_workspaceId);       
+        //_dashBoards = _client.Dashboards.GetDashboards(_workspaceId).Value ?? new List<Dashboard>();
+
+        _reports = _report.Value;
+        _filterReports = _report.Value;
+
+
+        if (user.Identity.IsAuthenticated)
+        {
+            authMessage = $"{user.Identity.Name} is authenticated.";
+            _claims = user.Claims;
+            userName = _claims?.FirstOrDefault(x => x.Type.Equals("name", StringComparison.OrdinalIgnoreCase))?.Value;
+
+            var userModel = new UserModel
+            {
+                userName = userName,
+                Email = userNameIdentity
+            };
+
+            await _userService.UpsertUserAsync(userModel);
+        }
+
+
+        await RenderReportAndDashboard();
+        showSpinner = false;
+    }
+    private void showAlertMessage(string alertType, string message, string title)
+    {
+        MessageDialog.OpenDialog(alertType,message);
+    }
+    private async Task RenderReportAndDashboard()
+    {      
+
+        foreach  (var item in _filterReports)
+        {
+            item.Description = string.IsNullOrEmpty(item.Description) ? string.Empty : item.Description;
+        }
+
+        var reportInDashboards = await _reportDashboardService.GetReportsInDashboardByTenantId(_customerTenantId, await GetCustomerTenantSid());
+
+        foreach (var reportInDashboard in reportInDashboards)
+        {
+            bool hasUserRole = await _userSecurityService.CheckUserGroupRole(userNameIdentity, reportInDashboard.UserRoleCode);
+            if (reportInDashboard.Tags != null && (hasUserRole || userNameGroupRolesModel.ViewAllReport))
+            {
+                string[] tagLines = reportInDashboard.Tags.Split(',');
+
+                foreach (var tag in tagLines)
+                {
+                    var tagModel = new TagModel
+                    {
+                      Code = tag,
+                      TagName = tag
+                    };
+
+                    if (!string.IsNullOrEmpty(tagModel.TagName))
+                    {
+                        tagModels.Add(tagModel);    
+                    }
+                }
+                tagModels = tagModels.DistinctBy(d => d.Code).ToList();
+            }
+        }
+
+        bookmarkModels = await _reportDashboardService.GetBookmarksInDashboardByTenantId(_customerTenantId, userNameIdentity);
+
+        if((!userNameGroupRolesModel.IsAdmin || !userNameGroupRolesModel.ViewAllReport) && reportInDashboards != null)
+        {
+            bookmarkModels = bookmarkModels.Where(r => userNameGroupRolesModel.CustomerUserRoles.Any(a => a.Code == 
+                                                    reportInDashboards?.FirstOrDefault(x => x.ReportDbId == r.ReportDbid).UserRoleCode)).ToList();
+        }
+
+        var user = await _userService.GetUsers(userNameIdentity);
+
+        //realtime dashboard report
+        //foreach (var dashboard in _dashBoards)
+        //{
+        //    var customerUserRole = new CustomerUserRole
+        //    {
+        //        CustomerTernantId = _customerTenantId,
+        //        Description = $"View {dashboard.DisplayName} Report",
+        //        UserRoleName = dashboard.DisplayName,
+        //        IsActive = true,
+        //    };
+
+        //    string reportRoleCode = await _userSecurityService.InsertCustomerUserRoleByName(customerUserRole);
+
+        //    string newTitle = await _reportDashboardService.UpsertReportInDashboard(dashboard.DisplayName, dashboard.Id, reportRoleCode);
+        //    dashboard.DisplayName = newTitle;
+
+        //    var reportBoard = reportInDashboards.FirstOrDefault(x => x.ReportPowerBiId == dashboard.Id); 
+
+        //    string realTimeDbTagList = string.Empty;
+
+        //    var realtimedbBoard = reportInDashboards.FirstOrDefault(x => x.ReportPowerBiId == dashboard.Id); 
+
+        //    if(realtimedbBoard != null && userNameGroupRolesModel != null && !string.IsNullOrEmpty(userNameIdentity))
+        //    {
+        //        var bookMarkperReport = await _bookmarkService.GetBookmarkInDashboardByReportDbIdAndUserId(reportBoard.ReportDbId, user.userID);
+
+        //        if(!userNameGroupRolesModel.IsAdmin && !userNameGroupRolesModel.ViewAllReport)
+        //        {
+        //            if (!userNameGroupRolesModel.CustomerUserRoles.Any(x => x.Code == realtimedbBoard.UserRoleCode))
+        //            {
+        //                continue;
+        //            }
+        //        }
+
+        //        if (!string.IsNullOrEmpty(realtimedbBoard.Tags))
+        //        {
+        //            string[] tagLines = realtimedbBoard.Tags.Split(',');
+        //            foreach (var tag in tagLines)
+        //            {
+        //                realTimeDbTagList = realTimeDbTagList + "\n" + tag;
+        //            }
+        //        } 
+        //        string editable = "false";
+        //        string isdashboard = "true";
+        //        dashboard.WebUrl = $"/reports/{_workspaceId}/{dashboard.Id}/{editable}/{isdashboard}";
+
+        //        var rptRealTimeDashboardDataModel = new DataModel
+        //        {
+        //            Name = dashboard.DisplayName,
+        //            Tag = string.IsNullOrEmpty(realtimedbBoard.Tags) ? string.Empty : realtimedbBoard.Tags,
+        //            Description = string.Empty
+        //        };
+
+        //        dataModels.Add(rptRealTimeDashboardDataModel);
+
+        //        var rptRealTimeDashboardReport = new ReportModel
+        //        {
+        //            Id = dashboard.Id,
+        //            Name = dashboard.DisplayName,
+        //            DatasetId = string.Empty,
+        //            AppId = dashboard.AppId,
+        //            ReportType = "Dashboard",
+        //            Description = string.Empty,
+        //            TagDashBoard = realTimeDbTagList,
+        //            WebUrl = dashboard.WebUrl,
+        //            EmbedUrl = _userReportCardImageService.GetUserReportCardImageBlobURLByReportTitle(dashboard.DisplayName).Result,
+        //            Tag = string.IsNullOrEmpty(realtimedbBoard.Tags) ? string.Empty : realtimedbBoard.Tags,
+        //            IsBookMark = bookMarkperReport == null ? false : bookMarkperReport.IsActive,
+        //            IsAdmin = userNameGroupRolesModel.IsAdmin,
+        //        };
+
+        //        reportModels.Add(rptRealTimeDashboardReport);
+
+
+        //    }
+
+        //}
+
+        //power bi reports
+        foreach (var item in _reports)
+        {
+            try {
+
+                var customerUserRole = new CustomerUserRole
+                {
+                    CustomerTernantId = _customerTenantId,
+                    Description = $"View {item.Name} Report",
+                    UserRoleName = item.Name,
+                    IsActive = true,
+                };
+
+
+                string reportRoleCode = await _userSecurityService.InsertCustomerUserRoleByName(customerUserRole);
+
+                string newTitle = await _reportDashboardService.UpsertReportInDashboard(item.Name, item.Id, reportRoleCode);
+
+                string reportTagList = string.Empty;
+                item.Name = newTitle;
+                item.EmbedUrl = _userReportCardImageService.GetUserReportCardImageBlobURLByReportTitle(item.Name).Result;
+
+                var reportBoard = reportInDashboards.FirstOrDefault(x => x.ReportPowerBiId.ToString().Equals(item.Id.ToString(), StringComparison.OrdinalIgnoreCase));
+
+                if (reportBoard != null)
+                {
+
+                    var likeReports = await _likeService.GetLikesInDashboardByReportDbId(reportBoard.ReportDbId, _customerTenantId);
+                    int countLike = likeReports.Where(x => x.IsLike == true).Count();
+                    int countDislike = likeReports.Where(x => x.IsLike == false).Count();
+                    var bookMarkperReport = new BookmarkModel();
+                    try
+                    {
+                        bookMarkperReport = await _bookmarkService.GetBookmarkInDashboardByReportDbIdAndUserId(reportBoard.ReportDbId, user.userID);
+                    }
+                    catch (Exception ex) { }
+                    if (!userNameGroupRolesModel.IsAdmin)
+                    {
+                        if (!userNameGroupRolesModel.CustomerUserRoles.Any(x => x.Code == reportBoard.UserRoleCode) && !userNameGroupRolesModel.ViewAllReport)
+                        {
+                            continue;
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(reportBoard.Tags))
+                    {
+                        string[] tagLines = reportBoard.Tags.Split(',');
+                        foreach (var tag in tagLines)
+                        {
+                            reportTagList = reportTagList + "\n" + tag;
+                        }
+                    }
+
+                    string editable = "false";
+                    string isdashboard = "false";
+                    item.WebUrl = $"/reports/{_workspaceId}/{item.Id}/{editable}/{isdashboard}";
+
+                    var rptPowerBIReport = new DataModel
+                        {
+                            Name = item.Name,
+                            Tag = string.IsNullOrEmpty(reportBoard.Tags) ? string.Empty : reportBoard.Tags,
+                            Description = item.Description,
+
+                        };
+
+                    dataModels.Add(rptPowerBIReport);
+
+                    var rptRealTimeDashboardReport = new ReportModel
+                        {
+                            Id = item.Id,
+                            Name = item.Name,
+                            DatasetId = item.DatasetId,
+                            AppId = item.AppId,
+                            Description = item.Description,
+                            ReportType = item.ReportType,
+                            WebUrl = item.WebUrl,
+                            EmbedUrl = item.EmbedUrl,
+                            TagDashBoard = reportTagList,
+                            Tag = string.IsNullOrEmpty(reportBoard.Tags) ? string.Empty : reportBoard.Tags,
+                            CntLike = countLike,
+                            CntDislike = countDislike,
+                            IsBookMark = bookMarkperReport == null ? false : bookMarkperReport.IsActive,
+                            IsAdmin = userNameGroupRolesModel.IsAdmin,
+                        };
+
+                    reportModels.Add(rptRealTimeDashboardReport);
+               
+           }
+         }catch (Exception ex) { }
+        }
+
+        reportFilterModels = reportModels;
+        isNoReports = !reportModels.Any();
+    }
+}
+<style>
+
+    .filterToggle
+    {
+    text-align: right;
+    float: right;
+    }
+    .filterToggle .e-icons.e-medium
+    {
+    cursor: pointer;
+    font-size: 20px;
+    }
+    .e-card {
+    border-radius: 4px;
+    box-sizing: border-box;
+    display: -ms-flexbox;
+    display: flex;
+    -ms-flex-direction: column;
+    flex-direction: column;
+    font-size: 15px;
+    -ms-flex-pack: center;
+    justify-content: center;
+    line-height: 36px;
+    min-height: 36px;
+    overflow: hidden;
+    position: relative;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+    width: 100%;
+    height: 100% !important;
+}
+    .newIcon {
+        background: #2CC000;
+        border-radius: 12px;
+        border-radius: 12px;
+        font-family: HelveticaNeue-Medium, 'Segoe UI';
+        font-weight: 500;
+        color: #ffffff;
+        margin-left: 16px;
+        font-size: 14px;
+        width: 58px;
+        height: 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        letter-spacing: 0.4px;
+    }
+
+    div.card {
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        text-align: center;
+    }
+
+    div.card:hover {
+        background-color: lightgrey;
+    }
+
+     /* Square Switch */
+    .e-switch-wrapper.square .e-switch-inner,
+    .e-switch-wrapper.square .e-switch-handle {
+      border-radius: 0;
+    }
+    /* Customize Handle and Bar Switch */
+    .e-switch-wrapper.custom-switch {
+      width: 50px;
+      height: 24px;
+    }
+    .e-switch-wrapper.custom-switch .e-switch-handle {
+      width: 20px;
+      height: 16px;
+    }
+    .e-switch-wrapper.custom-switch .e-switch-inner,
+    .e-switch-wrapper.custom-switch .e-switch-handle {
+      border-radius: 0;
+    }
+    .e-switch-wrapper.custom-switch .e-switch-handle.e-switch-active {
+      left: 42px;
+    }
+    
+    /* Customize Handle and Bar Switch */
+    .e-switch-wrapper.handle-text {
+      width: 58px;
+      height: 24px;
+    }
+    .e-switch-wrapper.handle-text .e-switch-handle {
+      width: 26px;
+      height: 20px;
+      left: 2px;
+      background-color: #fff;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner,
+    .e-switch-wrapper.handle-text .e-switch-handle {
+      border-radius: 0;
+    }
+    .e-switch-wrapper.handle-text .e-switch-handle.e-switch-active {
+      left: 46px;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner.e-switch-active,
+    .e-switch-wrapper.handle-text:hover .e-switch-inner.e-switch-active .e-switch-on {
+      background-color: #4d841d;
+      border-color: #4d841d;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner,
+    .e-switch-wrapper.handle-text .e-switch-off {
+      background-color: #e3165b;
+      border-color: #e3165b;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner:after,
+    .e-switch-wrapper.handle-text .e-switch-inner:before {
+      font-size: 10px;
+      position: absolute;
+      line-height: 21px;
+      font-family: "Helvetica", sans-serif;
+      z-index: 1;
+      height: 100%;
+      transition: all 200ms cubic-bezier(0.445, 0.05, 0.55, 0.95);
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner:before {
+      content: "List";
+      color: #e3165b;
+      left: 3px;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner:after {
+      content: "Card";
+      right: 5px;
+      color: #fff;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner.e-switch-active:before {
+      color: #fff;
+    }
+    .e-switch-wrapper.handle-text .e-switch-inner.e-switch-active:after {
+      color: #4d841d;
+    }
+    .e-switch-wrapper.handle-text:not(.e-switch-disabled):hover .e-switch-handle:not(.e-switch-active) {
+      background-color: #fff;
+    }
+
+    @*dropdown with checkbox*@
+     .control-wrapper {
+        max-width: 300px;
+        margin: 0 auto;
+        padding: 50px 0px 0px;
+    }
+
+ .center-wsp {
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+   .e-custom {
+        color: #808080;
+    }
+
+@@media (min-width:320px)  {     
+    .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:481px)  {    
+    .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    } }
+@@media (min-width:641px)  {   
+     .filter-bar {
+        z-index: 50000;
+        top: .7em;
+        text-align: center;
+        padding: 5px;
+        box-shadow: 0px 0px 0px 0px #a5aba594;
+        border-radius: 1px;
+        -webkit-tap-highlight-color: transparent;
+        border-color: transparent;
+        color: rgba(0,0,0,0.87);
+        transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+    }}
+@@media (min-width:961px)  {   
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1025px) {    
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+@@media (min-width:1281px) {   
+    .filter-bar {
+    cursor: pointer;
+    z-index: 50000;
+    right: 13vw;
+    /* left: 5vw; */
+    top: .7em;
+    position: absolute;
+    text-align: center;
+    padding: 5px;
+    box-shadow: 0px 0px 0px 0px #a5aba594;
+    border-radius: 1px;
+    -webkit-tap-highlight-color: transparent;
+    border-color: transparent;
+    color: rgba(0,0,0,0.87);
+    transition: box-shadow 280ms cubic-bezier(0.4, 0, 0.2, 1);
+} }
+</style>

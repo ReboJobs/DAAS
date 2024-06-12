@@ -1,0 +1,317 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportBugService
+@using BlazorDataAnalytics.Services.UserThemeSettingService
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using System.Threading
+@using Syncfusion.Blazor.DropDowns; 
+@using Syncfusion.Blazor.Buttons; 
+@using Microsoft.AspNetCore.WebUtilities 
+
+@inject IUserThemeSettingService _userThemeSettingService
+@inject NavigationManager uriHelper
+@inherits LayoutComponentBase 
+@inject NavigationManager UrlHelper; 
+
+<style> 
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    } 
+    .theme-title
+    {
+        background: #f7f7f7;
+        padding: 5px;
+        text-transform: uppercase;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .theme-body
+    {
+        align-items: flex-end;
+        text-align: end;
+        margin-bottom: 10px;
+    }
+    .theme-label
+    {
+        color: #817e7e;
+        font-size: 12px;
+        font-weight: 700;
+    }
+    .btn-close
+    {
+        border: none;
+        background: none;
+        color: red;
+        text-transform: uppercase;
+        font-weight: 600;
+        font-size: 20px;
+    }
+    .e-colorpicker-wrapper .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color, .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color {
+    background-size: 8px;
+    border-radius: 50%;
+    height: 12px;
+    margin-top: 0;
+    position: relative;
+    width: 12px;
+    }
+   
+    .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn .e-selected-color .e-split-preview {
+    border-radius: 50px !important;
+    }
+    .e-colorpicker-container .e-split-btn-wrapper .e-split-colorpicker.e-split-btn {
+    font-family: initial;
+    line-height: 1px;
+    padding: 1px 5px;
+    background-color: transparent;
+    border: 1px solid #f0f1f3;
+    }
+    .e-colorpicker-wrapper .e-btn.e-icon-btn, .e-colorpicker-container .e-btn.e-icon-btn {
+    background-color: #fff;
+    border: 1px solid #f0f1f3;
+    color: #6c757d;
+    }
+    .logo-text
+    {
+    width: 200px;
+    text-align: left;
+    padding: 5px;
+    text-transform: uppercase;
+    font-size: 12px;
+    font-weight: 700;
+    }
+    .e-upload .e-file-select-wrap .e-file-drop, .e-bigger.e-small .e-upload .e-file-select-wrap .e-file-drop {
+    font-family: inherit;
+    font-size: 14px;
+    margin-left: 12px;
+    display: none !important;
+    }
+    .e-upload {
+    border: 1px solid #f7f7f7;
+    border-top: none;
+    }
+    .e-upload .e-file-select-wrap, .e-bigger.e-small .e-upload .e-file-select-wrap {
+    padding-top: 10px !important;
+    padding-left: 10px;
+    }
+    .logo
+    {
+        align-items: flex-end;
+        text-align: start;
+        margin-bottom: 10px;
+    }
+    .btn-close:focus {
+    outline: 0;
+    box-shadow: none;
+    opacity: 1;
+    }
+    .theme-body .e-upload {
+    border:none;
+    }
+    .theme-body .e-file-select-wrap
+    {
+        padding:0px !important
+    }
+   .theme-body .e-upload .e-file-select-wrap .e-file-drop {
+    display: none !important;
+    }
+    .bg-image
+    {
+    display: flex;
+    text-align: center;
+    margin-bottom: -35px;
+    margin-left: 50px;
+    }
+ 
+</style> 
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show"></div>
+    <div class="modal-dialog" style="z-index: 1050;max-width: 60%">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Theme Settings</h5>
+                <button type="button" class="close btn-close" aria-label="Close" @onclick="Close">
+                      <span aria-hidden="true" >&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-5">
+                          <div >
+                           <p class="theme-title">User Logo</p>
+                            <div>
+                               <SfUploader ID="UploadLogo" AllowedExtensions=".png, .jpg, .jpeg, .img" AutoUpload="false">
+                                   <UploaderAsyncSettings SaveUrl="api/File/UploadUserHeaderLogo"></UploaderAsyncSettings>
+                               </SfUploader>
+                            </div>
+                        </div>
+                        <div >
+                           <p class="theme-title">Body Background Image</p>
+                            <div >
+                                <SfCheckBox Label="Use Background Image" @bind-Checked="userTheme.IsBackgroundImage"></SfCheckBox>
+                                 <SfUploader  ID="BackgroundImage" AllowedExtensions=".png, .jpg, .jpeg, .img"  AutoUpload="false">
+                                    <UploaderAsyncSettings SaveUrl="api/File/UploadUserBackgroundImage"></UploaderAsyncSettings>
+                                 </SfUploader>
+                            </div>
+                        </div>
+                    </div>
+                      <div class="col-md-7">
+               
+                        <div>
+                            <p class="theme-title">Body</p>
+                            <div class="theme-body">
+                     
+                                <span class="theme-label">Background</span>
+                                <SfColorPicker ID="BodyBackground"  @bind-Value="userTheme.BackgroundColorHex" ></SfColorPicker>
+                                   <span class="theme-label">Color</span>
+                                <SfColorPicker ID="BodyFontColor" @bind-Value="userTheme.BackgroundFontColorHex"></SfColorPicker>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="theme-title">Nav Bar</p>
+                            <div class="theme-body">
+                                <span class="theme-label">Background</span>
+                                  <SfColorPicker ID="NavBar" @bind-Value="userTheme.NavigationColorHex"></SfColorPicker>
+                                   <span class="theme-label">Color</span>
+                               <SfColorPicker ID="FontColorNavBar" @bind-Value="userTheme.NavigationFontColorHex"></SfColorPicker>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="theme-title">Dashboard</p>
+                            <div class="theme-body">
+                                <span class="theme-label">Background</span>
+                                  <SfColorPicker ID="Dashboard" @bind-Value="userTheme.DashboardColorHex"></SfColorPicker>
+                                   <span class="theme-label">Color</span>
+                                   <SfColorPicker ID="FontColorDashboard" @bind-Value="userTheme.DashboardFontColorHex"></SfColorPicker>
+                            </div>
+                        </div>
+                        <div>
+                            <p class="theme-title">Switch Themes</p>
+                            <div class="theme-body">
+                                     <div class="theme-switcher" style="width: 200px;float: right;"> 
+                                        @*Theme switcher*@ 
+                                        <SfDropDownList TItem="ThemeDetails" TValue="string" @bind-Value="userTheme.SwitchTheme" DataSource="@Themes"> 
+                                            <DropDownListFieldSettings Text="Text" Value="ID"></DropDownListFieldSettings> 
+                                            <DropDownListEvents TItem="ThemeDetails" TValue="string" ></DropDownListEvents> 
+                                        </SfDropDownList> 
+                                    </div> 
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                   
+                </div>
+                <div class="modal-footer">
+                          <SfButton CssClass="e-medium" OnClick="Submit">Apply</SfButton>
+                          <SfButton CssClass="e-medium" OnClick="Reset">Reset</SfButton>
+                </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    private string themeName; 
+    private List<ThemeDetails> Themes = new List<ThemeDetails>() { 
+        new ThemeDetails(){ ID = "material", Text = "Material" }, 
+        new ThemeDetails(){ ID = "bootstrap", Text = "Bootstrap" }, 
+        new ThemeDetails(){ ID = "fabric", Text = "Fabric" }, 
+        new ThemeDetails(){ ID = "bootstrap4", Text = "Bootstrap 4" }, 
+    }; 
+    public class ThemeDetails 
+    { 
+        public string ID { get; set; } 
+        public string Text { get; set; } 
+    }
+        /// The switcher OnChange event handler. 
+    /// </summary> 
+    //public void OnThemeChange(ChangeEventArgs<string, ThemeDetails> args) 
+    //{ 
+    //    var theme = GetThemeName(); 
+    //    if (theme != args.ItemData.ID) 
+    //    { 
+    //        UrlHelper.NavigateTo(GetUri(args.ItemData.ID), true); 
+    //    } 
+    //} 
+
+    /// <summary> 
+    /// Returns the theme name from Uri QueryString. 
+    /// </summary> 
+    private string GetThemeName() 
+    { 
+        var uri = UrlHelper.ToAbsoluteUri(UrlHelper.Uri); 
+        QueryHelpers.ParseQuery(uri.Query).TryGetValue("theme", out var theme); 
+        theme = theme.Count > 0 ? theme.First() : "bootstrap4"; 
+        return theme; 
+    } 
+ 
+    /// <summary> 
+    /// Returns the new Uri to navigate with theme changes. 
+    /// </summary> 
+    private string GetUri(string themeName) 
+    { 
+        var uri = UrlHelper.ToAbsoluteUri(UrlHelper.Uri); 
+        return uri.AbsolutePath + "?theme=" + themeName; 
+    } 
+ 
+    //protected override void OnInitialized() 
+    //{ 
+    //    var theme = GetThemeName(); 
+    //    themeName = theme.Contains("bootstrap4") ? "bootstrap4" : theme; 
+    //} 
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+    private UserThemeSettingModel userTheme { get; set; } = new UserThemeSettingModel();
+    private string userName { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await GetUserThemeSetting();
+        var theme = GetThemeName(); 
+        themeName = theme.Contains("bootstrap4") ? "bootstrap4" : theme; 
+    }
+
+    private async Task GetUserThemeSetting()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userName = user?.Identity?.Name ?? string.Empty;
+        userTheme =  _userThemeSettingService.GetUserThemeSettings(userName) ?? new UserThemeSettingModel();
+    }
+
+    private async Task Submit()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userTheme.UserName = userName;
+        userTheme = await _userThemeSettingService.UpsertUserThemeAsync(userTheme);
+
+       await Close();
+        var timer = new Timer(new TimerCallback(_ => { uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true); }), null, 100, 100);
+     
+    }
+
+   private async Task Reset()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        userTheme.UserName = userName;
+        userName = user?.Identity?.Name ?? string.Empty;
+
+        userTheme = await _userThemeSettingService.ResetUserThemes(userName);
+
+       await Close();
+        var timer = new Timer(new TimerCallback(_ => { uriHelper.NavigateTo(uriHelper.Uri, forceLoad: true); }), null, 100, 100);
+     
+    }
+
+}

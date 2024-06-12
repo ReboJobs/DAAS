@@ -1,0 +1,1866 @@
+﻿@page "/user-vault-dialog"
+
+@using Azure.Security.KeyVault.Secrets
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.UserVaultService
+@using BlazorDataAnalytics.Services.KeyVaultManager
+@using BlazorDataAnalytics.Services.LogService
+@using Newtonsoft.Json
+@using Syncfusion.Blazor.Data
+@using Microsoft.Azure.KeyVault;
+@using Microsoft.Azure.KeyVault.Models;
+@using Microsoft.IdentityModel.Clients.ActiveDirectory;
+@using SecretProperties = Azure.Security.KeyVault.Secrets.SecretProperties;
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using System.Text
+@using System.Net.Http.Headers
+@using System.Reflection
+@using Xero.NetStandard.OAuth2.Client;
+@using Xero.NetStandard.OAuth2.Config;
+@using Xero.NetStandard.OAuth2.Token;
+@using Syncfusion.Blazor.DropDowns
+@using Xero.NetStandard.OAuth2.Models
+@using Syncfusion.Blazor.DropDowns
+@using Syncfusion.Blazor.Calendars
+@using Syncfusion.Blazor.Grids
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Popups
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Cards
+@using BlazorDataAnalytics.Services.BlobStorageService;
+@using Microsoft.WindowsAzure.Storage
+@using Microsoft.WindowsAzure.Storage.Blob
+@using Microsoft.Data.SqlClient
+@using Blazored.Toast
+@using Blazored.Toast.Services
+@using Syncfusion.Blazor.TreeGrid;
+@using BlazorDataAnalytics.Services.SalesForceService;
+@using Persistence.Config.Entities;
+@using Syncfusion.Blazor.Navigations
+@using RestSharp;
+@using System.Dynamic
+
+@inject IUserSecurityService _userSecurityService
+@inject IUserVaultService _userVaultService
+@inject IKeyVaultManager _keyVaultManager
+@inject IJSRuntime jsRuntime
+@inject Blazored.SessionStorage.ISessionStorageService _sessionStorage
+@inject Blazored.LocalStorage.ILocalStorageService _localStorage
+@inject IConfiguration _config;
+@inject NavigationManager uriHelper
+@inject ILogService _logService
+@inject NavigationManager NavigationManager
+@inject IBlobStorageService _blobStorageService
+@inject IConfiguration _configuration
+@inject IToastService toastService
+@inject ISalesForceService _salesForceService
+
+<style>
+    .text-multiline textarea {
+        height: 200px !important;
+    }
+
+    fieldset {
+        background-color: #eeeeee;
+    }
+
+    legend {
+        background-color: gray;
+        color: white;
+        padding: 5px 10px;
+    }
+
+    .wizard-title {
+        font-size: 15px;
+        padding: 7px;
+    }
+
+    .responsive-align {
+        width: 75%;
+        margin: 0 auto;
+    }
+
+    .error {
+        color: red;
+    }
+
+    .search-item {
+        padding-right: 50px;
+        padding-bottom: 20px;
+    }
+
+    #amount {
+        text-align: right;
+        font-size: 15px;
+        padding: 15px 0px;
+    }
+
+    #passenger-table th {
+        text-align: center;
+        font-size: 14px;
+        font-weight: 400;
+        border: 1px solid gainsboro;
+    }
+
+    #passenger-table td, th {
+        padding: 10px;
+    }
+
+    #passenger-table td {
+        border: 1px solid gainsboro;
+    }
+
+    .xeroButton:hover {
+        box-shadow: rgba(0, 0, 0, 0.4) 0px 2px 4px, rgba(0, 0, 0, 0.3) 0px 7px 13px -3px, rgba(0, 0, 0, 0.2) 0px -3px 0px inset;
+    }
+
+    .property-panel-section .property-panel-content td {
+        padding: 0 0 15px 0;
+    }
+
+    .tile_layout.card-control-section .e-error {
+        height: 100px;
+        width: 100%;
+    }
+
+        .tile_layout.card-control-section .e-error .e-error-content {
+            color: red;
+            line-height: 100px;
+            text-align: center;
+        }
+
+    .tile_layout.card-control-section .e-card .e-card-image {
+        height: 180px;
+        width: inherit;
+    }
+
+    .tile_layout.card-control-section .e-card .e-card-header .e-card-header-caption .e-card-header-title {
+        font-size: 20px;
+        font-family: Helvetica, 'Segoe UI';
+        font-weight: bold;
+    }
+
+    .tile_layout.card-control-section .e-card .e-card-header .e-card-header-caption .e-card-sub-title {
+        padding-top: 5px;
+    }
+
+    .tile_layout.card-control-section .e-card .e-card-content {
+        padding-top: 0px;
+        height: 110px;
+    }
+
+    #source_link {
+        float: right;
+        margin-right: 10px;
+    }
+
+    img {
+        max-width: 100%;
+        max-height: 100%;
+        display: block;
+        margin: 0 auto;
+    }
+
+    .container {
+        height: 600px;
+        padding: 15px;
+        overflow-y: scroll;
+        display: flex;
+        flex-flow: row wrap;
+    }
+
+        .container > br {
+            width: 40%;
+            content: '';
+        }
+
+    .tile_layout.card-control-section .e-card .e-card-header .e-card-header-caption .e-card-header-title {
+        font-size: 10px !important
+    }
+
+    #boxes input[type="radio"][id^="cb"] {
+        display: none;
+    }
+
+    #boxes label {
+        border: 1px solid #fff;
+        display: block;
+        position: relative;
+        margin: 10px;
+        cursor: pointer;
+        -webkit-touch-callout: none;
+        -webkit-user-select: none;
+        -khtml-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+        #boxes label::before {
+            background-color: white;
+            color: white;
+            content: " ";
+            display: block;
+            border-radius: 50%;
+            border: 1px solid grey;
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            width: 25px;
+            height: 25px;
+            text-align: center;
+            line-height: 28px;
+            transition-duration: 0.4s;
+            transform: scale(0);
+        }
+
+        #boxes label img {
+            width: 100px;
+            transition-duration: 0.2s;
+            transform-origin: 50% 50%;
+        }
+
+    #boxes :checked + label {
+        border-color: #ddd;
+    }
+
+        #boxes :checked + label::before {
+            content: "✓";
+            background-color: grey;
+            transform: scale(1);
+            z-index: 1;
+        }
+
+        #boxes :checked + label img {
+            transform: scale(0.9);
+        }
+
+  /* Sample specific styles */
+
+    .sb-right-pane .sb-content-section {
+        min-height: 380px;
+    }
+    .control_wrapper {
+        margin: auto;
+        border: 1px solid #dddddd;
+        border-radius: 3px;
+        max-height: 200px;
+        overflow-y: scroll;
+    }
+    #selecttable {
+        overflow: auto;
+        max-height: 420px;
+    }
+    #selecttable div {
+        padding-left: 0;
+    }
+}
+
+</style>
+
+<SfDialog Target="#target" Width="1300px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Add / Edit Data Sources</Header>
+        <Content>
+            <div class="modal-content">
+                <SfSpinner @bind-Visible="showSpinner">
+                </SfSpinner>
+                <div class="control-section e-tab-section">
+                    <SfTab @ref="Tab" ID="BlazorTab" Height="544px" @bind-SelectedItem="SelectedTab">
+                        <EditForm id="frmVaultId" Model="@userVaultModel" OnSubmit="Submit">
+                            <DataAnnotationsValidator />
+                            <div class="modal-body">
+                                <TabEvents Created="TabCreate"></TabEvents>
+                                <TabItems>
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Type"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                            <div id="booking">
+                                                <div style="padding:15px;">
+                                                    <div class="control-section card-control-section tile_layout">
+                                                        <div class="container">
+                                                            @if (isAdd)
+                                                            {
+                                                                @foreach (var card in SystemData)
+                                                                {
+                                                                    <div>
+                                                                        <div id="boxes">
+                                                                            <input type="radio" name="creditCheck" value="@card.Id" id="@("cb" + card.Id)" @onchange="SelectionChanged" checked="@card.Checked" />
+                                                                            <label for="@("cb" + card.Id)">
+                                                                                <SfCard>
+                                                                                    <CardContent>
+                                                                                        @if (Convert.ToInt32(card.Id) == (int)EnumSystem.Xero)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Xero_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.NurseCall)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Nursecall-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Chris21)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Chris21-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.SalesForce)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Salesforce-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Epicor)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Epicor_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Basware)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Basware_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.iCare)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Icare_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Snowflake)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Snowflake_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Roubler)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Roubler_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Workday)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Workday_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.eCase)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Ecase_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Cornerstone)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Cornerstone_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Csv)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Csv_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Dynamics365)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Dynamics_365_Logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(card.Id) == (int)EnumSystem.Kronos)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Kronos_Incorporated_logo.png">
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/No-image-available.png" />
+                                                                                        }
+                                                                                    </CardContent>
+                                                                                    <CardFooter>
+                                                                                        @card.Name
+                                                                                    </CardFooter>
+                                                                                </SfCard>
+                                                                            </label>
+                                                                        </div>
+                                                                    </div>
+                                                                }
+                                                            }
+                                                            else
+                                                            {
+                                                                <div style="padding: 5px;margin-right: 38px;width: 154px;   height:162px; cursor: pointer;  ">
+                                                                    <div id="card_sample_1">
+
+                                                                        <SfCard>
+                                                                                        @if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Xero)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Xero_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.NurseCall)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Nursecall-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Chris21)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Chris21-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.SalesForce)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Salesforce-Logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Epicor)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Epicor_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Basware)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Basware_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.iCare)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Icare_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Snowflake)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Snowflake_logo.png" />
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Roubler)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Roubler_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Workday)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Workday_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.eCase)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Ecase_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Cornerstone)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Cornerstone_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Csv)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Csv_logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Dynamics365)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Dynamics_365_Logo.png">
+                                                                                        }
+                                                                                        else if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Kronos)
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/Kronos_Incorporated_logo.png">
+                                                                                        }
+                                                                                        else
+                                                                                        {
+                                                                                            <img style="cursor: pointer;" src="images/No-image-available.png" />
+                                                                                        }
+
+                                                                            <div style="font-size: 10px;">
+                                                                                <CardHeader Title="@userVaultModel.SystemName" SubTitle="@userVaultModel.Description" />
+                                                                            </div>
+
+                                                                            <CardFooter>
+                                                                                <CardFooterContent>
+
+                                                                                </CardFooterContent>
+                                                                            </CardFooter>
+                                                                        </SfCard>
+                                                                    </div>
+                                                                </div>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </ContentTemplate>
+                                    </TabItem>
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Source"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                            <div id="selectTrain">
+                                                @if (userVaultModel.System == EnumSystem.SalesForce)
+                                                {
+                                                    <div style="padding:15px;">
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-1" for="name">User Name</label>
+                                                            <SfTextBox ID="UserName" Placeholder="User Name" @bind-Value="userVaultModel.UserVaultAppDetail.UserName" Type="InputType.Text"></SfTextBox>
+                                                        
+                                                        
+                                                             <label class="col-1" for="name">Client Id</label>
+                                                             <div class="e-input-in-wrap" style="width: 100%;">
+                                                                  <SfTextBox ID="ClientId" Placeholder="ClientId" @bind-Value="userVaultModel.UserVaultAppDetail.ClientId" Type="ClientIdType"></SfTextBox>
+                                                             </div>
+                                                             <span class="e-icons e-eye e-btn-icon e-icon-left" @onclick="ShowClientId"></span>
+                                                        </div>
+
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-1" for="name">User Password</label>
+                                                            <div class="e-input-in-wrap" style="width: 100%;">
+                                                                <SfTextBox ID="UserPassword" Placeholder="User Password" @bind-Value="userVaultModel.UserVaultAppDetail.UserPassword" Type="PassTxtType"></SfTextBox>
+                                                            </div>
+                                                            <span class="e-icons e-eye e-btn-icon e-icon-left" @onclick="ShowPassword"></span>
+
+                                                            <label class="col-1" for="name">Client Secret</label>
+                                                             <div class="e-input-in-wrap" style="width: 100%;">
+                                                                 <SfTextBox ID="ClientSecret" Placeholder="Client Secret" @bind-Value="userVaultModel.UserVaultAppDetail.ClientSecret" Type="ClientSecretType"></SfTextBox>
+                                                             </div>
+                                                            <span class="e-icons e-eye e-btn-icon e-icon-left" @onclick="ShowClientSecret"></span>
+                                                        </div>
+
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-1" for="name">Security Token</label>
+                                                            <div class="e-input-in-wrap" style="width: 100%;">
+                                                                <SfTextBox ID="SecurityToken" Placeholder="Security Token" @bind-Value="userVaultModel.UserVaultAppDetail.SecurityToken" Type="TokenTxtType"></SfTextBox>
+                                                            </div>
+                                                            <span class="e-icons e-eye e-btn-icon e-icon-left" @onclick="ShowToken"></span>
+
+                                                            <label class="col-1" for="name">Api Version</label>
+                                                            <SfTextBox ID="ApiVersion" Placeholder="Api Version" @bind-Value="userVaultModel.UserVaultAppDetail.APIVersion" Type="InputType.Text"></SfTextBox>
+                                                        </div>
+
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-1" for="name">Tables</label> 
+                                                                        <SfGrid DataSource="@SalesForceTableList" Height="180"   Toolbar="@(new List<Object>() {"Search" , new ItemModel() { Text = "Refresh Table",Id = "Refresh", Template = Refresh }})">
+                                                                        <GridEditSettings AllowAdding=true Mode=" Syncfusion.Blazor.Grids.EditMode.Dialog"></GridEditSettings>
+                                                                              <GridSelectionSettings CheckboxOnly="true" PersistSelection="true"></GridSelectionSettings>
+                                                                        <GridColumns>
+                                                                         <GridColumn TextAlign="TextAlign.Center" Width="100px" >
+                                                                           <Template Context="childContext" >
+                                                                                  @{
+                                                                                var rec = (childContext as Record);
+                                                                                <SfCheckBox Disabled="true" @bind-Checked="rec.IsSelected"></SfCheckBox>
+                                                                                    }
+                                                                            </Template>
+                                                                        </GridColumn>
+                                                                            <GridColumn Field="QualifiedApiName" TextAlign="TextAlign.Left" HeaderText="Table Name" ShowInColumnChooser="false" ></GridColumn>
+                                                                            <GridColumn TextAlign="TextAlign.Center">
+                                                                                <Template Context="childContext" >
+                                                                                    @{
+                                                                                        var ctx = (childContext as Record);
+                                                                                       <SfButton HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Customize Column"}})" @onclick="async (e) => await EditTable(ctx)">Customize Column</SfButton>
+                                                                                       <SfButton HtmlAttributes="@(new Dictionary<string, object>(){{ "title", "Preview Data"}})" @onclick="async (e) => await PreviewData(ctx)">Preview Data</SfButton>
+                                                                                    }
+                                                                                </Template>
+                                                                            </GridColumn>
+                                                                        </GridColumns>
+                                                                    </SfGrid>
+                                                        </div>
+                                                    </div>
+                                                }
+                                                else if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.Oauth)
+                                                {
+                                                    @if (userVaultModel.System != EnumSystem.Xero)
+                                                    {
+                                                        <div style="padding:15px">
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                                <label class="col-1" for="name">Client Id</label>
+                                                                <SfTextBox ID="ClientId" Placeholder="ClientId" @bind-Value="userVaultModel.UserVaultAppDetail.ClientId" Type="InputType.Password"></SfTextBox>
+                                                            </div>
+
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                                <label class="col-1" for="name">Client Secret</label>
+                                                                <SfTextBox ID="ClientSecret" Placeholder="Client Secret" @bind-Value="userVaultModel.UserVaultAppDetail.ClientSecret" Type="InputType.Password"></SfTextBox>
+                                                            </div>
+                                                        </div>
+                                                    }
+
+                                                    @if (Convert.ToInt32(userVaultModel.SystemNameId) == (int)EnumSystem.Xero)
+                                                    {
+                                                        <div style="padding:15px">
+
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                                <label class="col-1" for="name">Connected Organisations</label>
+                                                                @if (@ListOfXeroxSelectedTenants != null)
+                                                                {
+                                                                    @foreach (var item in @ListOfXeroxSelectedTenants)
+                                                                    {
+                                                                        <div style="margin-right: 12px;">
+                                                                            <SfRadioButton Label="@item.TenantName" Name="custom" CssClass="e-primary" Value="@item.TenantId.ToString()" @bind-Checked="selectedTenant"></SfRadioButton><br />
+                                                                        </div>
+                                                                    }
+                                                                }
+                                                            </div>
+
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;">
+
+                                                                <a class="xeroButton" style="cursor: pointer;" @onclick="@(async () => await VerifyApplicationAuthentication())"><img src="images/connect-white.svg" alt=""></a>
+                                                                @if (ListOfXeroxSelectedTenants != null && ListOfXeroxSelectedTenants.Count > 0 && selectedTenant != null)
+                                                                {
+                                                                    <a class="xeroButton" style="cursor: pointer;" @onclick="@(async () => await DisConnectXero())"><img src="images/disconnect-white.svg" alt=""></a>
+                                                                }
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                }
+                                                else if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.SQL)
+                                                {
+                                                    <div style="padding:15px">
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Server Name</label>
+                                                            <SfTextBox ID="ServerName" Placeholder="Server Name" @bind-Value="userVaultModel.UserVaultAppDetail.ServerName"></SfTextBox>
+                                                        </div>
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Database Name</label>
+                                                            <SfTextBox ID="DatabaseName" Placeholder="Database Name" @bind-Value="userVaultModel.UserVaultAppDetail.DatabaseName"></SfTextBox>
+                                                        </div>
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">User Name</label>
+                                                            <SfTextBox ID="UserName" Placeholder="User Name" @bind-Value="userVaultModel.UserVaultAppDetail.UserName" Type="InputType.Text"></SfTextBox>
+                                                        </div>
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">User Password</label>
+                                                            <SfTextBox ID="UserPassword" Placeholder="User Password" @bind-Value="userVaultModel.UserVaultAppDetail.UserPassword" Type="InputType.Password"></SfTextBox>
+                                                        </div>
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Connection String</label>
+                                                            <SfTextBox ID="ConnectionString" Placeholder="Connection String" @bind-Value="userVaultModel.ConnectionString" Type="InputType.Password" Readonly></SfTextBox>
+                                                        </div>
+
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">WareHouse</label>
+                                                            <SfTextBox ID="WareHouse" Placeholder="WareHouse" @bind-Value="userVaultModel.UserVaultAppDetail.Warehouse" Type="InputType.Text"></SfTextBox>
+                                                        </div>
+                                                    </div>
+                                                }
+                                            else if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.CSV)
+                                            {
+                                                <div style="padding:15px">
+                                                <h4>Upload CSV File</h4>
+
+                                                <SfCheckBox @bind-Checked="HeaderRow" >Is first Row a header?</SfCheckBox>
+                                                <SfUploader @ref="UploadObj" ID="UploadFiles" AllowedExtensions=".xls,.csv" AutoUpload="false" AllowMultiple="false"> 
+                                                        <UploaderEvents ValueChange="OnChangeUpload"></UploaderEvents> 
+                                                </SfUploader> 
+
+                                                 </div>
+                                            }
+                                            </div>
+                                        </ContentTemplate>
+
+                                    </TabItem>
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Destination"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                            <div id="details" style="padding-left: 27px;padding-right: 24px;padding-top:10px">
+                                                <fieldset class="mt-3">
+                                                    <div class="form-group d-flex">
+                                                        <label class="col-2" for="name"></label>
+                                                        <SfCheckBox @bind-Checked="userVaultModel.UserVaultAppDetail.IsStoreInQTX" @onchange="onChange" @oninput="ChkBoxIsStoreInQTX">Store data in Qualiticks</SfCheckBox>
+                                                    </div>
+                                                    <div class="form-group d-flex mt-2">
+                                                        <label class="col-2" for="name"></label>
+                                                        <SfCheckBox @bind-Checked="userVaultModel.UserVaultAppDetail.IsBackUpToCustomer" @onchange="onChange" @oninput="ChkBoxIsBackUpToCustomer">Backup in Customer Tenant?</SfCheckBox>
+                                                    </div>
+                                                    @if (userVaultModel.UserVaultAppDetail.IsBackUpToCustomer)
+                                                    {
+                                                        <div style="padding: 7px; margin-top: 5px;">
+
+
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;margin-right: 13px;">
+                                                                <label class="col-2" for="name">ADLS Backup Connection String</label>
+                                                                <SfTextBox ID="DatalakeConnectionStringBackup" Placeholder="Enter ADLS Connection String" @bind-Value="userVaultModel.UserVaultAppDetail.DatalakeConString" Type="InputType.Password"></SfTextBox>
+                                                            </div>
+                                                            <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                                <label>Syncing Scheduler</label>
+                                                            </div>
+                                                            <div style="padding:15px;">
+                                                                <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                                    <label class="col-1" for="name">Recurrence <span style="color:red">*</span></label>
+                                                                </div>
+
+                                                                <div class="form-group d-flex" style="margin-bottom: 2%; padding-right: 60px;">
+                                                                    <label class="col-2" style="padding-top: 7px;" for="name">Every</label>
+                                                                    <div style="margin-right:35px">
+
+                                                                        <SfNumericTextBox TValue="int?" ID="Every" Placeholder="Every" @bind-Value="userVaultModel.UserVaultAppDetail.RecurrenceNo" Width="100px"></SfNumericTextBox>
+                                                                    </div>
+
+                                                                    <SfDropDownList TValue="string" @ref="ddlObj" TItem="ReuccurenceDesc" Placeholder="e.g. Minutes"  style="font-size:inherit" Width="100px"  @bind-Value="userVaultModel.UserVaultAppDetail.RecurrenceDesc" DataSource="@ReuccurenceDescList">
+                                                                        <DropDownListFieldSettings Text="Name" Value="Name"></DropDownListFieldSettings>
+                                                                        <DropDownListEvents TValue="string" TItem="ReuccurenceDesc" Filtering="OnFilter"></DropDownListEvents>
+                                                                    </SfDropDownList>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    }
+                                                    <div class="form-group d-flex mt-2">
+                                                        <label class="col-2" for="name"></label>
+                                                        <SfCheckBox @bind-Checked="userVaultModel.UserVaultAppDetail.IsKeepData" @onchange="onChange" @oninput="ChkBoxIsKeepData">Keep data in Customer Tenant only</SfCheckBox>
+                                                    </div>
+
+                                                    @if (userVaultModel.UserVaultAppDetail.IsKeepData)
+                                                    {
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Data Storage AccountName</label>
+                                                            <SfTextBox ID="KeepDataStorageAccountName" Placeholder="Data Storage AccountName" @bind-Value="userVaultModel.UserVaultAppDetail.KeepDataStorageAccountName" Type="InputType.Text"></SfTextBox>
+                                                        </div>
+
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Data Container Name</label>
+                                                            <SfTextBox ID="KeepDataContainerName" Placeholder="Data Container Name" @bind-Value="userVaultModel.UserVaultAppDetail.KeepDataContainerName" Type="InputType.Text"></SfTextBox>
+                                                        </div>
+                                                        <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                            <label class="col-2" for="name">Data Secret Key</label>
+                                                            <SfTextBox ID="KeepDataSecretKey" Placeholder="DataSecret Key" @bind-Value="userVaultModel.UserVaultAppDetail.KeepDataSecretKey" Type="InputType.Password"></SfTextBox>
+                                                        </div>
+                                                    }
+                                                </fieldset>
+                                                <div class="form-group" style="margin-bottom: 2%;">
+                                                    <SfTextBox ID="Description" @bind-Value="userVaultModel.Description" Multiline=true FloatLabelType="@FloatLabelType.Auto" Placeholder="Description"></SfTextBox>
+                                                </div>
+                                            </div>
+                                        </ContentTemplate>
+                                    </TabItem>
+
+                                    <TabItem>
+                                        <ChildContent>
+                                            <TabHeader Text="Syncing Scheduler"></TabHeader>
+                                        </ChildContent>
+                                        <ContentTemplate>
+                                            <div style="padding:15px;">
+                                                <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                    <label class="col-1" for="name">Recurrence <span style="color:red">*</span></label>
+                                                </div>
+
+                                                <div class="form-group d-flex" style="margin-bottom: 2%;">
+                                                    <label class="col-1" style="padding-top: 7px;" for="name">Every</label>
+                                                    <div style="margin-right:35px">
+
+                                                        <SfNumericTextBox TValue="int?" style="margin-right: 36px;" ID="Every" Placeholder="Every" @bind-Value="userVaultModel.UserVaultAppDetail.RecurrenceNo" Width="100px"></SfNumericTextBox>
+                                                    </div>
+                                                      <SfDropDownList TValue="string" @ref="ddlObj" TItem="ReuccurenceDesc" Placeholder="e.g. Minutes"  style="font-size:inherit" Width="100px"  @bind-Value="userVaultModel.UserVaultAppDetail.RecurrenceDesc" DataSource="@ReuccurenceDescList">
+                                                        <DropDownListFieldSettings Text="Name" Value="Name"></DropDownListFieldSettings>
+                                                        <DropDownListEvents TValue="string" TItem="ReuccurenceDesc" Filtering="OnFilter"></DropDownListEvents>
+                                                    </SfDropDownList>
+                                                </div>
+                                            </div>
+                                        </ContentTemplate>
+                                    </TabItem>
+                                </TabItems>
+
+                            </div>
+                        </EditForm>
+
+                    </SfTab>
+                </div>
+
+
+                <div class="modal-footer" style="z-index:9999;">
+                    @if (SelectedTab == 0 || SelectedTab == 1 || SelectedTab == 2)
+                    {
+                        <SfButton CssClass="e-medium" OnClick="Next">Next</SfButton>
+                    }
+                    else
+                    {
+                        <SfButton CssClass="e-medium" HtmlAttributes="@(new() { { "form", "frmVaultId" } })">Submit</SfButton>
+                        <SfButton CssClass="e-medium e-danger" OnClick="CloseDialog">Close</SfButton>
+                    }
+                </div>
+            </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+<SfDialog Target="#target" Width="500px" ShowCloseIcon="true" @bind-Visible="IsVisibleEditTable" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Add / Edit Table Columns</Header>
+        <Content>
+             <SfGrid DataSource="@SalesForceColumnList" Height="300" Width="450px" Toolbar="@(new List<string>() {"Search" })">
+                <GridEditSettings AllowAdding=true Mode=" Syncfusion.Blazor.Grids.EditMode.Dialog"></GridEditSettings>
+                        <GridSelectionSettings CheckboxOnly="true" PersistSelection="true"></GridSelectionSettings>
+                <GridColumns>
+                    <GridColumn Width="40">
+                    <Template Context="childContext" >
+                            @{
+                                var rec = (childContext as Record);
+                                <SfCheckBox @bind-Checked="rec.IsSelected"  @onchange="(e => onChangeColumn(rec))"></SfCheckBox>
+                            }
+                    </Template>
+                </GridColumn>
+                    <GridColumn Field="QualifiedApiName" HeaderText="Column Name"   ></GridColumn>
+                </GridColumns>
+            </SfGrid>
+            <div class="modal-footer" style="z-index:9999;">
+                 <SfButton CssClass="e-medium"  OnClick="async (e) => await SaveColumnDialog()">Save</SfButton>
+                  <SfButton CssClass="e-medium e-danger" OnClick="CloseColumnDialog">Close</SfButton>
+            </div>
+
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+<SfDialog Target="#target"  Width="800px" ShowCloseIcon="true" @bind-Visible="IsVisiblePreview" AllowPrerender="true" IsModal="true">
+    <DialogTemplates>
+        <Header>Preview Data</Header>
+        <Content>
+            <SfGrid  Height="300" Width="750px" TValue="ExpandoObject" DataSource=@GridDatax>
+                <GridColumns>
+                    @if (GridDatax != null && GridDatax.Any())
+                    {
+                        foreach (var item in (IDictionary<string, object>)GridDatax.First())
+                        {
+                            if(item.Value!=null && !item.Value.ToString().Contains("System.Dynamic.ExpandoObject"))
+                            {
+                                <GridColumn HeaderText="@item.Key" Field="@item.Key"></GridColumn>
+                            }
+                        }
+                    }
+                </GridColumns>
+            </SfGrid>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    private RenderFragment Refresh =>
+        @<SfButton style="height: 35px;"  @onclick="async (e) => await RetrieveTables()">Refresh table</SfButton>;
+
+    bool IsVisiblePreview = false;
+    SfUploader UploadObj; 
+    private EditContext mycontext;
+
+    [Parameter]
+    public int? id { get; set; } = 0;
+
+    [Parameter]
+    public Guid? systemId { get; set; }
+
+    [Parameter]
+    public string userName { get; set; }
+
+    [Parameter]
+    public string description { get; set; }
+
+    [Parameter]
+    public byte systemNameId { get; set; }
+
+    [Parameter]
+    public byte connectorTypeId { get; set; }
+
+    [Parameter]
+    public int customerTenantID { get; set; }
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    public bool IsVisible { get; set; } = false;
+    public bool HeaderRow { get; set; }
+
+    public InputType PassTxtType = InputType.Password;
+    public InputType TokenTxtType = InputType.Password;
+    public InputType ClientIdType = InputType.Password;
+    public InputType ClientSecretType = InputType.Password;
+
+    private bool showSpinner { get; set; }
+
+    private UserVaultModel userVaultModel { get; set; } = new UserVaultModel();
+
+    public class CommonEnumModelExtended { }
+
+    List<CommonEnumModel> SystemData = new List<CommonEnumModel>();
+
+
+    List<CommonEnumModel> ConnectorTypeData = Enum.GetValues(typeof(EnumSystem))
+                    .Cast<EnumConnectorType>()
+                    .Select(v => new CommonEnumModel { Id = (byte)v, Name = v.GetDescription() })
+                    .ToList();
+
+    public List<Tenant> ListOfXeroxSelectedTenants;
+    public Guid? selectedTenant;
+
+    SfTab Tab;
+    public int SelectedTab = 0;
+    public bool isAdd = false;
+
+    SfDropDownList<string, ReuccurenceDesc> ddlObj { get; set; }
+
+    public class ReuccurenceDesc
+    {
+        public string Name { get; set; }
+    }
+
+    List<ReuccurenceDesc> ReuccurenceDescList = new List<ReuccurenceDesc>
+    {
+        new ReuccurenceDesc() { Name = "Minute(s)"},
+        new ReuccurenceDesc() { Name = "Hour(s)"},
+        new ReuccurenceDesc() { Name = "Day(s)" },
+        new ReuccurenceDesc() { Name = "Week(s)"},
+        new ReuccurenceDesc() { Name = "Month(s)"}
+    };
+
+    List<ReuccurenceDesc> ReuccurenceDescFiltered = new List<ReuccurenceDesc>
+    {
+        new ReuccurenceDesc() { Name = "Minute(s)"},
+        new ReuccurenceDesc() { Name = "Hour(s)"},
+        new ReuccurenceDesc() { Name = "Day(s)" },
+        new ReuccurenceDesc() { Name = "Week(s)"},
+        new ReuccurenceDesc() { Name = "Month(s)"}
+    };
+
+    private UserNameGroupRolesModel userNameGroupRolesModel = new UserNameGroupRolesModel();
+    private string userNameIdentity { get; set; }
+    private string CustomerName { get; set; }
+    bool verify = false;
+    public bool isFiltered = false;
+    string salesForceInstanceUrl = "";
+    public List<UserVaultSalesForceTable> selectedTables { get; set; }
+    public List<Record> SalesForceTableList { get; set; }
+    public List<Record> SalesForceColumnList { get; set; }
+    private List<string> sqlDatabases = new List<string>();
+    private string dbName = "";  
+    private List<IBrowserFile> loadedFiles = new();
+    private readonly string defaultDirectory = "default";
+
+    public class Attributes
+    {
+        public string type { get; set; }
+        public string url { get; set; }
+    }
+
+    public class Record
+    {
+        public bool IsSelected  { get; set; }
+        public Attributes attributes { get; set; }
+        public string QualifiedApiName { get; set; }
+        public string ParentName { get; set; }
+    }
+
+    public class SalesForceTable
+    {
+        public int totalSize { get; set; }
+        public bool done { get; set; }
+        public List<Record> records { get; set; }
+    }
+
+    public class SalesForceColumn
+    {
+        public int totalSize { get; set; }
+        public bool done { get; set; }
+        public List<Record> records { get; set; }
+    }
+
+    public class SalesForceToken
+    {
+        public string access_token { get; set; }
+        public string instance_url { get; set; }
+        public string id { get; set; }
+        public string token_type { get; set; }
+        public string issued_at { get; set; }
+        public string signature { get; set; }
+    }
+    public bool IsVisibleEditTable = false;
+
+    public async Task TabCreate()
+    {
+        await Tab.EnableTabAsync(1, true);
+        await Tab.EnableTabAsync(2, true);
+        await Tab.EnableTabAsync(3, true);
+    }
+
+    private async Task Next()
+    {
+        this.SelectedTab++;
+        if(this.SelectedTab == 1)
+        {
+            if (userVaultModel.System != null && userVaultModel.System == EnumSystem.Xero)
+            {
+                userVaultModel.UserVaultAppDetail.ClientId = _config.GetSection("Xero:ClientId").Value;
+                userVaultModel.UserVaultAppDetail.ClientSecret = _config.GetSection("Xero:ClientSecret").Value;
+
+            }else if(userVaultModel.System != null && userVaultModel.System == EnumSystem.SalesForce)
+            {
+                if(!isAdd)
+                {
+                     SalesForceTableList = await GetTables(); 
+                }
+            }
+        }
+    }
+
+    public async Task initXero(int userVaultId, string cllientId, string emailAddress, string payload)
+    {
+        if (userVaultId == null || userVaultId == 0)
+            return;
+
+        string baseUrl = new Uri(NavigationManager.BaseUri).ToString();
+        string callbackUri = baseUrl + "/api/AuthorizeApp/XeroCallback";
+        var userVaultAppDetails = await _userVaultService.GetUserVaultAppDetails(userVaultId);
+
+
+        XeroConfiguration xconfig = new XeroConfiguration
+            {
+                ClientId = _config.GetSection("Xero:ClientId").Value,
+                ClientSecret = _config.GetSection("Xero:ClientSecret").Value,
+                CallbackUri = new Uri(callbackUri),
+                Scope = "offline_access accounting.transactions openid profile email accounting.contacts accounting.settings files",
+                State = userVaultId.ToString()
+            };
+
+        var client = new XeroClient(xconfig);
+
+        var xeroToken = System.Text.Json.JsonSerializer.Deserialize<XeroOAuth2Token>(payload);
+
+        var utcTimeNow = DateTime.UtcNow;
+        if (utcTimeNow > xeroToken.ExpiresAtUtc)
+        {
+            var clientExpiry = new XeroClient(xconfig);
+            xeroToken = (XeroOAuth2Token)await clientExpiry.RefreshAccessTokenAsync(xeroToken);
+            payload = System.Text.Json.JsonSerializer.Serialize(xeroToken);
+            xeroToken = System.Text.Json.JsonSerializer.Deserialize<XeroOAuth2Token>(payload);
+        }
+
+        var userVaultAppDetail = new UserVaultAppDetailModel
+            {
+                UserVaultId = userVaultId,
+                ClientId = _config.GetSection("Xero:ClientId").Value,
+                ClientSecret = _config.GetSection("Xero:ClientSecret").Value,
+                AccessToken = xeroToken.AccessToken,
+                RefreshToken = xeroToken.RefreshToken,
+                DateTokenExpiredUtc = xeroToken.ExpiresAtUtc,
+                IdToken = xeroToken.IdToken,
+                PayLoadData = payload
+            };
+
+        ListOfXeroxSelectedTenants = await client.GetConnectionsAsync(xeroToken);
+        await _userVaultService.UpdateUserAppDetailTokenAsync(userVaultAppDetail);
+        if (ListOfXeroxSelectedTenants.Count > 0)
+            verify = false;
+    }
+
+
+    public async Task OpenDialog(UserVaultModel userVaultModel)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        id = 0;
+        if (userVaultModel != null)
+        {
+            id = userVaultModel.Id;
+            systemNameId = (byte)userVaultModel.System;
+            description = userVaultModel.Description;
+            customerTenantID = userVaultModel.CustomerTenantID ?? 0;
+            connectorTypeId = userVaultModel.ConnectorTypeId ?? 0;
+        }
+        await this.OnInitializedAsync();
+        this.StateHasChanged();
+    }
+
+    public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+
+    private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            SelectedTab = 0;
+            showSpinner = false;
+            SystemData = _userVaultService.GetSystems();
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(user.Identity.Name);
+            customerTenantID = userNameGroupRolesModel.CustomerTenantId;
+            userNameIdentity = user?.Identity?.Name;
+            userNameGroupRolesModel = await _userSecurityService.GetUserNameGroupRoles(userNameIdentity);
+
+            if (userNameGroupRolesModel.WorkspaceId == Guid.Empty)
+            {
+                showSpinner = false;
+                return;
+            }
+
+            CustomerName = userNameGroupRolesModel.CustomerName;
+
+            if (id > 0)
+            {
+                showSpinner = true;
+                isAdd = false;
+                KeyVaultSecret keyVaultSecretValue;
+                keyVaultSecretValue = await _keyVaultManager.GetSecret(id.ToString());
+                userVaultModel = new UserVaultModel
+                    {
+                        Id = id,
+                        ConnectionString = keyVaultSecretValue != null ? keyVaultSecretValue.Value : string.Empty,
+                        Description = description,
+                        SystemNameId = systemNameId,
+                        System = (EnumSystem)systemNameId,
+                        ConnectorTypeId = connectorTypeId,
+                        CustomerTenantID = customerTenantID,
+                    };
+
+                userVaultModel.UserVaultAppDetail = await _userVaultService.GetUserVaultAppDetails(id);
+            }
+            else
+            {
+                isAdd = true;
+                userVaultModel.UserVaultAppDetail.IsStoreInQTX = true;
+                userVaultModel.UserVaultAppDetail.UserName = string.Empty;
+                userVaultModel.UserVaultAppDetail.UserPassword = string.Empty;
+                userVaultModel.UserVaultAppDetail.ClientId = string.Empty;
+                userVaultModel.UserVaultAppDetail.ClientSecret = string.Empty;
+                userVaultModel.UserVaultAppDetail.SecurityToken = string.Empty;
+                userVaultModel.UserVaultAppDetail.APIVersion = string.Empty;
+                userVaultModel.UserVaultAppDetail = new UserVaultAppDetailModel();
+                SalesForceTableList = new List<Record>();
+            }
+
+
+            showSpinner = false;
+
+            if (userVaultModel.SystemNameId != null || userVaultModel.SystemNameId <= 0)
+            {
+                userVaultModel.UserVaultAppDetail = await _userVaultService.GetUserVaultAppDetails(userVaultModel.UserVaultAppDetail.UserVaultId);
+                await initXero((int)userVaultModel.UserVaultAppDetail.UserVaultId, userVaultModel.UserVaultAppDetail.ClientId, user.Identity.Name, userVaultModel.UserVaultAppDetail.PayLoadData);
+            }
+        }
+        catch (Exception ex)
+        {
+            showSpinner = false;
+        }
+        finally
+        {
+            showSpinner = false;
+        }
+    }
+
+    protected override async void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+
+            if (userVaultModel.SystemNameId != null || userVaultModel.SystemNameId <= 0)
+            {
+                userVaultModel.UserVaultAppDetail.ClientId = _config.GetSection("Xero:ClientId").Value;
+                userVaultModel.UserVaultAppDetail.ClientSecret = _config.GetSection("Xero:ClientSecret").Value;
+            }
+
+            using var periodicTimer = new PeriodicTimer(TimeSpan.FromSeconds(10));
+            while (await periodicTimer.WaitForNextTickAsync() && verify == true)
+            {
+                try
+                {
+                    if (userVaultModel.SystemNameId != null || userVaultModel.SystemNameId <= 0)
+                    {
+                        if (userVaultModel.UserVaultAppDetail.UserVaultId != null || userVaultModel.UserVaultAppDetail.UserVaultId <= 0)
+                        {
+                            userVaultModel.UserVaultAppDetail = await _userVaultService.GetUserVaultAppDetailsV2(userVaultModel.UserVaultAppDetail.UserVaultId);
+                            if (userVaultModel.UserVaultAppDetail.PayLoadData != null)
+                            {
+                                await initXero((int)userVaultModel.UserVaultAppDetail.UserVaultId, userVaultModel.UserVaultAppDetail.ClientId, user.Identity.Name, userVaultModel.UserVaultAppDetail.PayLoadData);
+                                await InvokeAsync(StateHasChanged);
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+        }
+    }
+
+
+    private void ChkBoxIsStoreInQTX(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        var value = e.Value.ToString();
+        if (bool.Parse(value) == true)
+        {
+            userVaultModel.UserVaultAppDetail.IsKeepData = false;
+        }
+    }
+
+    private void ChkBoxIsBackUpToCustomer(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        var value = e.Value.ToString();
+        if (bool.Parse(value) == true)
+        {
+            userVaultModel.UserVaultAppDetail.IsStoreInQTX = true;
+            userVaultModel.UserVaultAppDetail.IsKeepData = false;
+        }
+
+    }
+
+    private void ChkBoxIsKeepData(Microsoft.AspNetCore.Components.ChangeEventArgs e)
+    {
+        var value = e.Value.ToString();
+        if (bool.Parse(value) == true)
+        {
+            userVaultModel.UserVaultAppDetail.IsStoreInQTX = false;
+            userVaultModel.UserVaultAppDetail.IsBackUpToCustomer = false;
+        }
+    }
+
+
+    private void onChange(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        StateHasChanged();
+    }
+
+    private async Task Submit(EditContext mycontext)
+    {
+        showSpinner = true;
+        bool isValid = mycontext.Validate();
+        bool isAdd = (userVaultModel.Id == null) ? true : false;
+        await processSubmit(isAdd, isValid);
+        showSpinner = false;
+        this.refreshParent = true;
+        this.OnSubmitHandler();
+        this.CloseDialog();
+    }
+
+    public async Task processSubmit(bool isAdd, bool isValid)
+    {
+        try
+        {
+            var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var customerTenant = await _userSecurityService.GetCustomerTenants(customerTenantID);
+
+            @if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.Oauth && userVaultModel.System != EnumSystem.SalesForce)
+            {
+                userVaultModel.UserVaultAppDetail.ServerName = string.Empty;
+                userVaultModel.UserVaultAppDetail.DatabaseName = string.Empty;
+                userVaultModel.UserVaultAppDetail.UserName = string.Empty;
+                userVaultModel.UserVaultAppDetail.UserPassword = string.Empty;
+                userVaultModel.ConnectionString = string.Empty;
+                string callbackUri = uriHelper.BaseUri + "api/AuthorizeApp/XeroCallback";
+                userVaultModel.UserVaultAppDetail.CallBackUrl = callbackUri;
+            }
+
+            @if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.SQL && userVaultModel.System != EnumSystem.SalesForce)
+            {
+                userVaultModel.UserVaultAppDetail.ClientId = string.Empty;
+                userVaultModel.UserVaultAppDetail.ClientSecret = string.Empty;
+                userVaultModel.UserVaultAppDetail.CallBackUrl = string.Empty;
+                userVaultModel.UserVaultAppDetail.DateTokenExpiredUtc = null;
+                userVaultModel.UserVaultAppDetail.RefreshToken = string.Empty;
+                userVaultModel.UserVaultAppDetail.AccessToken = string.Empty;
+            }
+
+
+            if (isValid)
+            {
+                userVaultModel.System = (EnumSystem)userVaultModel?.SystemNameId;
+                if (userVaultModel.UserVaultAppDetail.IsKeepData)
+                {
+                    userVaultModel.ContentType = $"Customer: {customerTenant.Name},  System: {userVaultModel.System.GetDescription()},Id:{userVaultModel.SystemNameId},Keep-Data:true" + " SQL";
+                }
+                else if (userVaultModel.UserVaultAppDetail.IsBackUpToCustomer)
+                {
+                    userVaultModel.ContentType = $"Customer: {customerTenant.Name},  System: {userVaultModel.System.GetDescription()},Id:{userVaultModel.SystemNameId},Backup-Customer:true" + " SQL";
+                    userVaultModel.ConnectionString = userVaultModel.UserVaultAppDetail.DatalakeConStringBackup;
+                }
+                else
+                {
+                    @if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.Oauth)
+                    {
+                        userVaultModel.ContentType = $"Customer: {customerTenant.Name}, System: {userVaultModel.System.GetDescription()},Id:{userVaultModel.SystemNameId}" + " SQL";
+                    }
+                    @if (userVaultModel.ConnectorTypeId == (byte)EnumConnectorType.SQL)
+                    {
+                        userVaultModel.ContentType = $"Customer: {customerTenant.Name}, System: {userVaultModel.System.GetDescription()},Id:{userVaultModel.SystemNameId}" + " OAuth";
+                        userVaultModel.ConnectionString = $"Data Source={userVaultModel.UserVaultAppDetail.ServerName}; Initial Catalog={userVaultModel.UserVaultAppDetail.DatabaseName}; User Id={userVaultModel.UserVaultAppDetail.UserName}; Password={userVaultModel.UserVaultAppDetail.UserPassword}";
+                    }
+                }
+
+                userVaultModel.CustomerTenantID = customerTenantID;
+                KeyVaultSecret keyVaultSecretValue;
+
+                userVaultModel = await _userVaultService.UpsertUserVaultAsync(userVaultModel);
+
+                userVaultModel.UserVaultAppDetail.UserVaultId = userVaultModel.Id;
+
+                userVaultModel.UserVaultAppDetail = await _userVaultService.UpsertUserVaultAppDetailAsync(userVaultModel.UserVaultAppDetail);
+
+                if (userVaultModel.ConnectionString != null)
+                    keyVaultSecretValue = await _keyVaultManager.SetSecret(userVaultModel);
+
+                if (userVaultModel.UserVaultAppDetail.IsKeepData)
+                {
+                    await _keyVaultManager.SetSecretValue(userVaultModel);
+                }
+
+                //dropdown
+                @if (userVaultModel.System == EnumSystem.SalesForce)
+                {
+                    //get the description of child
+                    List<UserVaultSalesForceTable> salesForceList = new List<UserVaultSalesForceTable>();
+                    foreach (var x in this.SalesForceTableList)
+                    {
+                        string columnsCommaSep = "";
+                        if(x.IsSelected == true)
+                        {
+                            var selectedColumns = this.SalesForceColumnList.Where(y=>y.ParentName == x.QualifiedApiName && y.IsSelected == true).Select(z=>z.QualifiedApiName).ToList();
+                            columnsCommaSep = string.Join(",", selectedColumns);
+
+                            if (columnsCommaSep != "")
+                            {
+                                var salesForce = new UserVaultSalesForceTable { TableName = x.QualifiedApiName, Columns = columnsCommaSep, UserVaultAppDetailsId = userVaultModel.UserVaultAppDetail.Id };
+                                salesForceList.Add(salesForce);
+                            }
+                        }
+                    }
+                    if(salesForceList.Count> 0)
+                    {
+                          await  _salesForceService.AddTableAndColumns(salesForceList); 
+                    }
+                    else
+                    {
+                        await _salesForceService.RemoveAllTableAndColumns(userVaultModel.UserVaultAppDetail.Id);
+                    }
+                  
+                }
+
+                //load files
+                foreach (var file in loadedFiles)
+                {
+                    using (var ms = new MemoryStream())
+                    {
+                        var fileBytes = ms.ToArray();
+
+                        var fileUploadModel = new FileUploadModel
+                            {
+                                FileName = file.Name,
+                                FileMimeType = file.ContentType,
+                                FileByte = fileBytes,
+                                Container = "CSV",
+                                SubDirectory = defaultDirectory
+                    };
+
+                        string imageBlobUrl = _blobStorageService.UploadFileToBlob(fileUploadModel).Result;
+
+                    }
+
+                }
+
+                var message = isAdd ? "Added DataSource with UserVault Id: " + userVaultModel.Id : "Updated DataSource with UserVault Id: " + userVaultModel.Id;
+
+                var log = new LogModel { Date = System.DateTime.Now, UserEmail = user.Identity.Name, Message = message, Module = "DataSource" };
+                await _logService.Log(log);
+            }
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+    }
+
+    public async Task OnChangeUpload(UploadChangeEventArgs args) 
+    { 
+        var authState =  AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.Result.User;
+
+
+        string conStringDb = _configuration.GetConnectionString("XeroConnection").Replace("databaseName", "master");
+        string queryDb = @"SELECT name, database_id, create_date
+                            FROM sys.databases";
+
+        sqlDatabases = CreateCommand(queryDb, conStringDb, true);
+
+        string Filename = "";
+        string url = "";
+        foreach (var file in args.Files) 
+        { 
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=storageaccountlanz9402;AccountKey=w/99ADayKZqqXlj2oP7g/RJUGMadxsKh/KUW8WQr1SQypKKqRNn5pXANZMQuuzj4BqEOhX98Ga8idLP45mnNhQ==;EndpointSuffix=core.windows.net");
+            var blobClient = cloudStorageAccount.CreateCloudBlobClient(); 
+            var container = blobClient.GetContainerReference("csv");
+            await container.CreateIfNotExistsAsync(); 
+            await container.SetPermissionsAsync(new BlobContainerPermissions() 
+            { 
+                PublicAccess = BlobContainerPublicAccessType.Blob 
+            });
+            Filename = file.FileInfo.Name;
+            var blob = container.GetBlockBlobReference(Filename); 
+            blob.Properties.ContentType = file.FileInfo.MimeContentType;
+            byte[] bytes = file.Stream.ToArray();
+            await blob.UploadFromByteArrayAsync(bytes, 0, bytes.Length);
+            url = blob.Uri.AbsoluteUri;
+        }
+
+        CustomerName = CustomerName.ToLower().Replace("daaas", "").Replace("-", "");
+        var dbName = sqlDatabases.Where(x => x.ToString().ToLower().Contains(CustomerName.ToLower().Trim())).FirstOrDefault();
+
+        if (string.IsNullOrEmpty(dbName)) 
+        {
+            toastService.ShowError("No Database Found!", "Error!");
+        }
+
+        string conString =  _configuration.GetConnectionString("XeroConnection").Replace("databaseName",dbName);
+        string dropQuery = "  DROP VIEW IF EXISTS [dbo].[CSV-" +  Filename + "]";
+        string query = @"
+                        CREATE   VIEW  [dbo].[CSV-" +  Filename + @"] AS
+                        SELECT
+                            *
+                        FROM
+                            OPENROWSET(
+                                BULK   '" + url + @"',
+                                FORMAT =  'CSV',
+                                parser_version = '2.0',      
+                                FIELDTERMINATOR =',', 
+                                ROWTERMINATOR = '\n',
+                                HEADER_ROW = " + HeaderRow + @"
+                            ) AS [r];
+                        ";
+
+        createView(conString,query, dropQuery, true, dbName);
+    }
+
+    private void createView(string connectionString , string queryString, string dropQuery, bool isSQLDatabase, string databaseName = null)
+    {
+        try
+        {
+            using (SqlConnection connection = new SqlConnection(
+            connectionString))
+            {
+                SqlCommand command = new SqlCommand(dropQuery, connection);
+                command.Connection.Open();
+                command.ExecuteNonQuery();
+                command.Connection.Close();
+
+                SqlCommand commandCreate = new SqlCommand(queryString, connection);
+                commandCreate.Connection.Open();
+                commandCreate.ExecuteNonQuery();
+                commandCreate.Connection.Close();
+            }
+            toastService.ShowSuccess("Succesfuly Created View", "Success");
+        }
+        catch(Exception ex)
+        {
+            toastService.ShowError(ex.Message, "Error!");
+        }
+    }
+
+    private List<string> CreateCommand(string queryString,string connectionString, bool isSQLDatabase, string databaseName = null)
+    {
+        List<string> data = new List<string>();
+        using (SqlConnection connection = new SqlConnection(
+        connectionString))
+        {
+            SqlCommand command = new SqlCommand(queryString, connection);
+            command.Connection.Open();
+            command.ExecuteNonQuery();
+            SqlDataReader reader = command.ExecuteReader();
+
+            //    // Call Read before accessing data.
+            while (reader.Read())
+            {
+                var record = reader[0];
+                data.Add(record.ToString());
+
+
+            }
+            command.Connection.Close();
+            reader.Close();
+        }
+        return data;
+    }
+
+    private string GenerateFileName(string fileName, string subDirectory)
+    {
+        string strFileName = string.Empty;
+        string[] strName = fileName.Split('.');
+        strFileName = subDirectory + "/" + fileName;
+        return strFileName;
+    }
+
+    public async Task VerifyApplicationAuthentication()
+    {
+        showSpinner = true;
+        if (userVaultModel.Id == null || userVaultModel.Id <= 0)
+        {
+            bool isAdd = (userVaultModel.Id == null) ? true : false;
+            await processSubmit(isAdd, true);
+        }
+
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if ((EnumSystem)userVaultModel.SystemNameId == EnumSystem.Xero)
+        {
+            string callbackUri = uriHelper.BaseUri + "api/AuthorizeApp/XeroCallback";
+
+
+            XeroConfiguration xconfig = new XeroConfiguration
+                {
+                    ClientId = _config.GetSection("Xero:ClientId").Value,
+                    ClientSecret = _config.GetSection("Xero:ClientSecret").Value,
+                    CallbackUri = new Uri(callbackUri),
+                    Scope = "offline_access accounting.transactions openid profile email accounting.contacts accounting.settings accounting.budgets.read accounting.journals.read accounting.reports.read",
+                    State = userVaultModel.Id.ToString()
+                };
+
+            var client = new XeroClient(xconfig);
+
+            TokenUtilities.StoreCodeVerifier(TokenUtilities.GenerateCodeVerifier());
+            string url = client.BuildLoginUriPkce(TokenUtilities.GetCodeVerifier());
+            verify = true;
+            showSpinner = false;
+            await jsRuntime.InvokeAsync<object>("open", url, "_blank");
+        }
+        showSpinner = false;
+    }
+
+    public async Task DisConnectXero()
+    {
+        if (selectedTenant == null)
+            return;
+
+        var Tenant = ListOfXeroxSelectedTenants.Where(t => t.TenantId.ToString().Equals(selectedTenant.ToString())).FirstOrDefault();
+        string baseUrl = new Uri(NavigationManager.BaseUri).ToString();
+        string callbackUri = baseUrl + "/api/AuthorizeApp/XeroCallback";
+        var userVaultAppDetails = await _userVaultService.GetUserVaultAppDetails(id);
+
+        XeroConfiguration xconfig = new XeroConfiguration
+            {
+                ClientId = userVaultAppDetails.ClientId,
+                ClientSecret = userVaultAppDetails.ClientSecret,
+                CallbackUri = new Uri(callbackUri),
+                Scope = "offline_access accounting.transactions openid profile email accounting.contacts accounting.settings files",
+                State = id.ToString()
+            };
+
+        var client = new XeroClient(xconfig);
+
+        var xeroToken = System.Text.Json.JsonSerializer.Deserialize<XeroOAuth2Token>(userVaultAppDetails.PayLoadData);
+        await client.DeleteConnectionAsync(xeroToken, Tenant);
+        ListOfXeroxSelectedTenants.Remove(Tenant);
+        selectedTenant = default;
+
+    }
+
+    private void LoadFiles(InputFileChangeEventArgs e)
+    {
+        loadedFiles.Clear();
+
+        foreach (var file in e.GetMultipleFiles(5))
+        {
+            try
+            {
+                loadedFiles.Add(file);
+            }
+            catch (Exception ex)
+            {
+            }
+        }
+    }
+
+
+    public void SelectionChanged(Microsoft.AspNetCore.Components.ChangeEventArgs args)
+    {
+        var id = int.Parse(args.Value.ToString());
+        SystemData.ForEach(x => x.Checked = null);
+        var tempSystem = this.SystemData.Where(x => x.Id == id).First();
+        tempSystem.Checked = "Checked";
+        userVaultModel.ConnectorTypeId = tempSystem.ConnectorTypeId;
+        userVaultModel.System = (EnumSystem)tempSystem.Id;
+        userVaultModel.SystemNameId = byte.Parse(args.Value.ToString());
+
+    }
+
+    public void ShowPassword()
+    {
+        if (PassTxtType == InputType.Password)
+        {
+            PassTxtType = InputType.Text;
+        }
+        else
+        {
+            PassTxtType = InputType.Password;
+        }
+    }
+
+    public void ShowToken()
+    {
+        if (TokenTxtType == InputType.Password)
+        {
+            TokenTxtType = InputType.Text;
+        }
+        else
+        {
+            TokenTxtType = InputType.Password;
+        }
+    }
+
+    public void ShowClientId()
+    {
+        if (ClientIdType == InputType.Password)
+        {
+            ClientIdType = InputType.Text;
+        }
+        else
+        {
+            ClientIdType = InputType.Password;
+        }
+    }
+
+    public void ShowClientSecret()
+    {
+        if (ClientSecretType == InputType.Password)
+        {
+            ClientSecretType = InputType.Text;
+        }
+        else
+        {
+            ClientSecretType = InputType.Password;
+        }
+    }
+
+    private async Task OnFilter(FilteringEventArgs args)
+    {
+        args.PreventDefaultAction = true;
+        var query = new Query().Where(new WhereFilter() { Field = "Name", Operator = "contains", value = args.Text, IgnoreCase = true });
+
+        query = !string.IsNullOrEmpty(args.Text) ? query : new Query();
+
+        await ddlObj.FilterAsync(ReuccurenceDescFiltered, query);
+    }
+
+    public async Task<SalesForceToken> GetToken()
+    {
+        string url = "https://login.salesforce.com/services/oauth2/token";
+        HttpClient httpClient = new HttpClient();
+        httpClient.BaseAddress = new Uri("https://login.salesforce.com/services/oauth2/token");          
+
+        var queryString = new Dictionary<string, string>()
+        {
+            { "grant_type", "password"  }, { "client_id", userVaultModel.UserVaultAppDetail.ClientId   },  { "client_secret",userVaultModel.UserVaultAppDetail.ClientSecret  }, { "username", userVaultModel.UserVaultAppDetail.UserName} ,  { "password", userVaultModel.UserVaultAppDetail.UserPassword + userVaultModel.UserVaultAppDetail.SecurityToken }
+        };
+        var requestUri = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("?", queryString);
+
+        var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, requestUri);
+
+        request.Content = new   StringContent(string.Empty,  Encoding.UTF8,   "application/x-www-form-urlencoded");
+        var response = await httpClient.SendAsync(request);
+
+
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var data =  JsonConvert.DeserializeObject<SalesForceToken>(jsonString);
+        return data;
+    }
+
+    public async Task RetrieveTables()
+    {
+        SalesForceTableList = await GetTables();
+    }
+
+
+    public async Task<List<Record>> GetTables()
+    {
+        try
+        {
+            showSpinner = true;
+            var token = await GetToken();
+
+            var baseAddress = token.instance_url + "/services/data/v56.0/query";
+            HttpClient httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(baseAddress);         
+            httpClient.DefaultRequestHeaders.Authorization =  new AuthenticationHeaderValue("Bearer", token.access_token);
+
+
+            var queryString = new Dictionary<string, string>()
+            {
+                { "q", "SELECT  QualifiedApiName FROM EntityDefinition order by QualifiedApiName" }
+            };
+            var requestUri = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("?", queryString);
+
+            var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, requestUri);
+
+            request.Content = new   StringContent(string.Empty,  Encoding.UTF8,   "application/x-www-form-urlencoded");
+
+            var response = await httpClient.SendAsync(request);
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var data = JsonConvert.DeserializeObject<SalesForceTable>(jsonString);
+
+            if(userVaultModel.UserVaultAppDetail.Id!=null)
+            {
+                this.selectedTables = await _salesForceService.getUserVaultAppDetailTablesAndColumns(userVaultModel.UserVaultAppDetail.Id);
+                foreach(var y in data.records)
+                {
+                    if(selectedTables.Select(x=>x.TableName).Contains(y.QualifiedApiName))
+                    {
+                        y.IsSelected = true;
+                    }
+                }
+            }
+            showSpinner = false;
+            return data.records; 
+        }
+        catch(Exception ex)
+        {
+            toastService.ShowError("Cannot Retrieve Sales Force Tables!", "Error");
+            showSpinner = false;
+            return null;
+        }
+
+    }
+
+    public async Task<List<Record>> GetColumns(string tableName)
+    {
+        var token = await GetToken();
+        var baseAddress = token.instance_url + "/services/data/v56.0/query";
+        HttpClient httpClient = new HttpClient();
+        httpClient.BaseAddress = new Uri(baseAddress);         
+        httpClient.DefaultRequestHeaders.Authorization =  new AuthenticationHeaderValue("Bearer", token.access_token);
+
+        var query = "SELECT  QualifiedApiName FROM FieldDefinition WHERE EntityDefinition.QualifiedApiName = '" + tableName + "'";
+        var queryString = new Dictionary<string, string>()
+        {
+            { "q",query}
+        };
+        var requestUri = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("?", queryString);
+
+        var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, requestUri);
+
+        request.Content = new   StringContent(string.Empty,  Encoding.UTF8,   "application/x-www-form-urlencoded");
+
+        var response = await httpClient.SendAsync(request);
+        var jsonString = await response.Content.ReadAsStringAsync();
+        var data = JsonConvert.DeserializeObject<SalesForceColumn>(jsonString);
+
+        data.records.ForEach(x => x.ParentName = tableName);
+        this.selectedTables = await _salesForceService.getUserVaultAppDetailTablesAndColumns(userVaultModel.UserVaultAppDetail.Id);
+        var selectedColumns = selectedTables.Where(x=>x.TableName == tableName).Select(x=>x.Columns).FirstOrDefault();
+        if (selectedColumns != null)
+        {
+            var columnsToRow = selectedColumns.Split(",");
+
+            foreach (var y in data.records)
+            {
+                if (columnsToRow.Contains(y.QualifiedApiName))
+                {
+                    y.IsSelected = true;
+                }
+            }
+        }
+        return data.records;
+    }
+
+    private async Task EditTable(Record rec)
+    {
+        //rec.IsSelected = true;
+        SalesForceColumnList = await GetColumns(rec.QualifiedApiName);
+        IsVisibleEditTable = true;
+        this.StateHasChanged();
+    }
+
+    private async Task PreviewData(Record rec)
+    {
+        await GetData(rec);
+        this.StateHasChanged();
+    }
+
+    private void onChangeColumn(Record args)
+    {
+        if (args.IsSelected)
+        {
+            SalesForceTableList.Where(x => x.QualifiedApiName == args.ParentName).FirstOrDefault().IsSelected = true;
+        }
+        else 
+        {
+            var temp = SalesForceColumnList.Where(x => x.ParentName == args.ParentName && x.IsSelected == true).FirstOrDefault();
+            if(temp==null)
+            {
+                SalesForceTableList.Where(x => x.QualifiedApiName == args.ParentName).FirstOrDefault().IsSelected = false;
+            }
+        }
+    }
+
+    public async Task SaveColumnDialog()
+    {
+        List<UserVaultSalesForceTable> salesForceList = new List<UserVaultSalesForceTable>();
+
+        var tableSelected = this.SalesForceTableList.Where(x => x.IsSelected);
+        foreach (var x in tableSelected)
+        {
+            string columnsCommaSep = "";
+            if(x.IsSelected == true)
+            {
+                var selectedColumns = this.SalesForceColumnList.Where(y=>y.ParentName == x.QualifiedApiName && y.IsSelected == true).Select(z=>z.QualifiedApiName).ToList();
+                columnsCommaSep = string.Join(",", selectedColumns);
+
+                if (columnsCommaSep != "")
+                {
+                    var salesForce = new UserVaultSalesForceTable { TableName = x.QualifiedApiName, Columns = columnsCommaSep, UserVaultAppDetailsId = userVaultModel.UserVaultAppDetail.Id };
+                    salesForceList.Add(salesForce);
+                }
+            }
+
+        }
+
+        bool isAdd = (userVaultModel.Id == null) ? true : false;
+
+        if (isAdd)
+        {
+            await processSubmit(isAdd, true);
+            this.IsVisibleEditTable = false;
+            toastService.ShowSuccess("Succesfuly Save tables and columns", "Success");
+        }
+        else 
+        {
+            showSpinner = true;
+            if(salesForceList.Count> 0)
+            {
+                await  _salesForceService.AddTableAndColumns(salesForceList); 
+            }
+            else
+            {
+                await _salesForceService.RemoveAllTableAndColumns(userVaultModel.UserVaultAppDetail.Id);
+            }
+            showSpinner = false;
+            this.IsVisibleEditTable = false;
+            toastService.ShowSuccess("Succesfuly Save tables and columns", "Success");
+        }
+    }
+
+    public void CloseColumnDialog()
+    {
+        this.IsVisibleEditTable = false;
+        this.StateHasChanged();
+    }
+
+    private List<ExpandoObject> GridDatax;
+
+    public class ExpandCls
+    {
+        public int totalSize { get; set; }
+        public bool done { get; set; }
+        public List<ExpandoObject> records { get; set; }
+    }
+
+    private async Task GetData(Record rec)
+    {
+        try
+        {
+            var token = await GetToken();
+            var baseAddress = token.instance_url + "/services/data/v56.0/query";
+            HttpClient httpClient = new HttpClient();
+            httpClient.BaseAddress = new Uri(baseAddress);         
+            httpClient.DefaultRequestHeaders.Authorization =  new AuthenticationHeaderValue("Bearer", token.access_token);
+
+            var query = "SELECT  FIELDS(ALL)  FROM " + rec.QualifiedApiName + "  LIMIT 200";
+            var queryString = new Dictionary<string, string>()
+            {
+                { "q",query}
+            };
+            var requestUri = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString("?", queryString);
+
+            var request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, requestUri);
+
+            request.Content = new   StringContent(string.Empty,  Encoding.UTF8,   "application/x-www-form-urlencoded");
+
+            var response = await httpClient.SendAsync(request);
+            var jsonString = await response.Content.ReadAsStringAsync();
+            var datax = JsonConvert.DeserializeObject<ExpandCls>(jsonString);
+
+
+            var data = datax.records;
+            GridDatax =  data;
+            IsVisiblePreview = true;
+            StateHasChanged();
+        }
+        catch(Exception ex)
+        {
+            toastService.ShowError("Cannot Preview Data for this table", "System Message");
+        }
+    }
+}

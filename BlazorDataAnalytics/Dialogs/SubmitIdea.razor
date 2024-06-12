@@ -1,0 +1,270 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.IdeaService
+@using Microsoft.WindowsAzure.Storage
+@using Microsoft.WindowsAzure.Storage.Auth
+@using Microsoft.WindowsAzure.Storage.Blob
+@using Syncfusion.Blazor.Data
+@using BlazorDataAnalytics.Services.BlobStorageService;
+@inject IIdeaService _ideaService
+@inject IBlobStorageService _blobStorageService;
+<style> 
+    .text-multiline textarea{ 
+        height: 400px !important; 
+    } 
+     .modal-rte .e-rte-content {
+    border: none !important;
+    height: 400px !important;
+    overflow: auto;
+    }
+    .modal-rte .e-richtexteditor {
+    color: #333;
+    display: block;
+    position: relative;
+    border: 1px solid #e3e1e1 !important;
+    }
+    .modal-rte .e-upload-actions
+    {
+        display:none;
+    }
+</style> 
+
+<div class="modal fade show d-block" tabindex="-1" role="dialog">
+    <div class="modal-backdrop fade show" @onclick="Cancel"></div>
+    <div class="modal-dialog" style="z-index: 1050;max-width: 70%">
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Submit Idea</h5>
+                <button type="button" class="close" aria-label="Close" @onclick="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <EditForm id="frmSubmitIdeaId" Model="@ideaModel" OnSubmit="Submit">
+                 <DataAnnotationsValidator />
+                <div class="modal-body">
+@*                    <div class="form-group d-flex" style="margin-bottom: 2%;">
+                        <label class="col-2" for="name">Id</label>
+                         <SfTextBox Placeholder="Id" Value="@(ideaModel.Id.ToString())" Readonly=true> </SfTextBox>
+                    </div>*@
+                   <div class="form-group d-flex">
+                        <label class="col-2" for="name">Title</label>
+                         <SfTextBox ID="Title" Placeholder="Title" @bind-Value="ideaModel.Title" Enabled="enableControl"></SfTextBox>
+                     </div>
+                 @*   <div class="form-group">
+                         <SfTextBox CssClass="text-multiline" ID="Description"@bind-Value="ideaModel.Description" Multiline=true FloatLabelType="@FloatLabelType.Auto" Placeholder="Description" Enabled="
+                         "></SfTextBox>
+                     </div>*@
+                     <div class="form-group modal-rte">
+                     <label class="col-2" for="name">Description</label>
+                       <SfRichTextEditor @ref="ideaModelObj" EnableHtmlEncode="true" @bind-Value="@ideaModel.Description" >
+                            <ChildContent>
+                                  <RichTextEditorEvents OnImageSelected="@OnImageSelectedHandler">
+                                   </RichTextEditorEvents>
+                                      <RichTextEditorEvents BeforeUploadImage ="@BeforeUploadImageHandler">
+                                       </RichTextEditorEvents>
+                                         <RichTextEditorEvents OnImageUploadSuccess="@OnImageUploadSuccessHandler">
+                                             </RichTextEditorEvents>
+                                    <RichTextEditorEvents Created="@CreatedHandler"></RichTextEditorEvents>
+                                <RichTextEditorToolbarSettings Items="@Tools" Enable="false"></RichTextEditorToolbarSettings>
+                                <RichTextEditorImageSettings SaveFormat="SaveFormat.Base64" SaveUrl="api/File/UploadUserIdeaImage"></RichTextEditorImageSettings>
+                            </ChildContent>
+                        </SfRichTextEditor>
+                        <SfUploader @ref="UploadObj" ID="UploadFiles" AllowedExtensions=".doc, .docx, .pdf, .png, .jpeg, .jpg" AutoUpload="false"> 
+                                <UploaderEvents ValueChange="OnChangeUpload"></UploaderEvents> 
+                        </SfUploader> 
+                     </div>
+                </div>
+             </EditForm>
+            <div class="modal-footer">
+                @{
+
+                    <SfButton CssClass="e-medium" Disabled="!enableControl" HtmlAttributes="@(new() { { "form", "frmSubmitIdeaId" } })">Submit</SfButton>
+                    
+                }
+                 <SfButton CssClass="e-medium e-danger" OnClick="Close">Close</SfButton>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+
+    SfRichTextEditor ideaModelObj;
+    SfUploader UploadObj; 
+    private List<ToolbarItemModel> Tools = new List<ToolbarItemModel>()
+    {
+        new ToolbarItemModel() { Command = ToolbarCommand.Bold },
+        new ToolbarItemModel() { Command = ToolbarCommand.Italic },
+        new ToolbarItemModel() { Command = ToolbarCommand.Underline },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Formats },
+        new ToolbarItemModel() { Command = ToolbarCommand.Alignments },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.OrderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.UnorderedList },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.CreateLink },
+        new ToolbarItemModel() { Command = ToolbarCommand.Image },
+        new ToolbarItemModel() { Command = ToolbarCommand.SourceCode },
+        new ToolbarItemModel() { Command = ToolbarCommand.Separator },
+        new ToolbarItemModel() { Command = ToolbarCommand.Undo },
+        new ToolbarItemModel() { Command = ToolbarCommand.Redo }
+    };
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+    private readonly string imageContainer = "images";
+    [Parameter]
+    public int ideaId { get; set; } = 0;
+
+    [Parameter]
+    public string title { get; set; }
+
+    [Parameter]
+    public string description { get; set; }
+    [Parameter]
+    public string imagedesc { get; set; }
+    [Parameter]
+    public string submittedBy { get; set; }
+
+    [Parameter]
+    public int totalVotes { get; set; }
+
+    private IdeaModel ideaModel { get; set; } = new IdeaModel();
+
+    private bool enableControl { get; set; } = true;
+
+    public void OnImageSelectedHandler(SelectedEventArgs args)
+    {
+        var x = args;
+    }
+
+    public void BeforeUploadImageHandler(ImageUploadingEventArgs args)
+    {
+        var x = args;
+    }
+    public void OnImageUploadSuccessHandler(ImageSuccessEventArgs args)
+    {
+        var x = args;
+    }
+    public void CreatedHandler(Object args)
+    {
+        var x = args;
+    }
+    private void Cancel()
+    {
+        _modalInstance.CancelAsync();
+    }
+
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if(ideaId > 0)
+        {
+            ideaModel = new IdeaModel
+            {
+                Id = ideaId,
+                Title = title,
+                Description = description += "<img src='" +imagedesc+ "'/>",
+
+            };
+                  enableControl = user?.Identity?.Name == submittedBy;
+        }
+
+  
+
+        StateHasChanged();
+    }
+
+
+    public async Task Submit(EditContext context)
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        bool isValid = context.Validate();
+        await UploadObj.UploadAsync();
+        if (isValid)
+        {
+            Console.WriteLine(this.ideaModelObj.Value);
+            ideaModel.SubmittedBy = user?.Identity?.Name;
+            ideaModel.DateCreated = DateTime.Now;
+            ideaModel.Description = ideaModelObj.Value;
+            ideaModel = await _ideaService.UpsertIdeasAsync(ideaModel);
+            await _modalInstance.CloseAsync(ModalResult.Ok<IdeaModel>(ideaModel));
+
+        }
+        else
+        {
+            // Form has invalid inputs.
+        }
+
+
+    }
+    //public async Task OnChangeUpload(UploadChangeEventArgs args) 
+    //{ 
+    //    var authState =  AuthenticationStateProvider.GetAuthenticationStateAsync();
+    //    var user = authState.Result.User;
+
+    //    foreach (var file in args.Files) 
+    //    {      
+    //        byte[] bytes = file.Stream.ToArray(); 
+
+    //        var fileUploadModel = new FileUploadModel
+    //            {
+    //                FileName = file.FileInfo.Name,
+    //                FileMimeType = file.FileInfo.MimeContentType,
+    //                FileByte = bytes,
+    //                Container = imageContainer,
+    //                SubDirectory = user?.Identity?.Name,
+    //            };
+
+    //        string imageBlobUrl = _blobStorageService.UploadFileToBlob(fileUploadModel).Result;
+    //        _ = _ideaService.UpsertIdeasImageBlobUrlAsync(ideaModel.Id, imageBlobUrl);
+    //    }
+    //} 
+
+    public async Task OnChangeUpload(UploadChangeEventArgs args) 
+    { 
+        var authState =  AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.Result.User;
+        foreach (var file in args.Files) 
+        { 
+            CloudStorageAccount cloudStorageAccount = CloudStorageAccount.Parse("DefaultEndpointsProtocol=https;AccountName=storageaccountlanz9402;AccountKey=w/99ADayKZqqXlj2oP7g/RJUGMadxsKh/KUW8WQr1SQypKKqRNn5pXANZMQuuzj4BqEOhX98Ga8idLP45mnNhQ==;EndpointSuffix=core.windows.net");
+            var blobClient = cloudStorageAccount.CreateCloudBlobClient(); 
+            var container = blobClient.GetContainerReference("images");
+            await container.CreateIfNotExistsAsync(); 
+            await container.SetPermissionsAsync(new BlobContainerPermissions() 
+            { 
+                PublicAccess = BlobContainerPublicAccessType.Blob 
+            });
+            string Filename = this.GenerateFileName(file.FileInfo.Name,user.Identity.Name);
+            var blob = container.GetBlockBlobReference(Filename); 
+            blob.Properties.ContentType = file.FileInfo.MimeContentType;
+            byte[] bytes = file.Stream.ToArray();
+            await blob.UploadFromByteArrayAsync(bytes, 0, bytes.Length);
+            string url = blob.Uri.AbsoluteUri;
+
+             _ = _ideaService.UpsertIdeasImageBlobUrlAsync(ideaModel.Id, url);
+        } 
+    }
+    private string GenerateFileName(string fileName, string subDirectory)
+    {
+        string strFileName = string.Empty;
+        string[] strName = fileName.Split('.');
+        strFileName = subDirectory + "/" + DateTime.Now.ToUniversalTime().ToString("yyyyMMdd\\THHmmssfff") + "." + strName[strName.Length - 1];
+        return strFileName;
+    }
+
+}

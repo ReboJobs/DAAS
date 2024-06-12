@@ -1,0 +1,100 @@
+﻿@using Azure.Security.KeyVault.Secrets
+@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.BlobStorageService
+@using Syncfusion.Blazor.Data
+@using Microsoft.Azure.KeyVault;
+@using Microsoft.Azure.KeyVault.Models;
+@using Microsoft.IdentityModel.Clients.ActiveDirectory;
+@using BlazorDataAnalytics.Services.Utility.FileUtility;
+
+@inject IBlobStorageService _blobStoreageServices
+
+
+<SfDialog Target="#target" Width="1400px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true" EnableResize="true" AllowDragging="true">
+    <DialogTemplates>
+        <Header>Upload Card Picture</Header>
+        <Content>
+        <!-- Pop it above the backdrop -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" aria-label="Close" @onclick="CloseDialog">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+             <SfSpinner @bind-Visible="showSpinner">
+             </SfSpinner>
+            <SfUploader @ref="UploadObj" ID="UploadFiles" AllowedExtensions=".png, .jpg, .jpeg, .img" AllowMultiple=false AutoUpload=false>
+               <UploaderAsyncSettings SaveUrl="api/File/UploadCardPicture"></UploaderAsyncSettings>
+                <UploaderEvents FileSelected="@OnFileSelected"></UploaderEvents>
+            </SfUploader>
+
+        </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+@code {
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [CascadingParameter]
+    public IModalService Modal { get; set; }
+
+    [Parameter]
+    public int reportDBID { get; set; }
+
+    SfUploader UploadObj; 
+
+    private bool showSpinner { get; set; }
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    public bool IsVisible { get; set; } = false;
+
+    private void Cancel()
+    {
+               CloseDialog();
+    }
+
+    private async Task Close()
+    {
+               CloseDialog();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+    }
+
+
+    private void OnFileSelected(SelectedEventArgs args) 
+    {
+        args.CustomFormData = new List<object> { new { ReportDBID = reportDBID.ToString() } }; 
+    } 
+     public async Task OpenDialog()
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        StateHasChanged();
+    }
+  public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+    private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+}
+
+

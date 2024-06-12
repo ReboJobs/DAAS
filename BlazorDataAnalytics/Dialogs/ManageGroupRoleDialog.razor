@@ -1,0 +1,192 @@
+﻿@page "/manage-group-role-dialog"
+@using Models
+@using BlazorDataAnalytics.Services.UserSecurityService
+@using Syncfusion.Blazor.Data
+@inject IUserSecurityService _userSecurityService
+
+@*@page "/managegrouprole"*@
+
+<style> 
+
+    .e-btn-grd{
+        background-color: transparent !important;
+    }
+
+</style> 
+
+<SfDialog Target="#target" Width="1400px" ShowCloseIcon="true" @bind-Visible="IsVisible" AllowPrerender="true" IsModal="true" EnableResize="true" AllowDragging="true">
+    <DialogTemplates>
+        <Header>Delete Customer User</Header>
+        <Content>
+            <div class="modal-content">
+                <div class="modal-body">
+                    <div class="col-lg-12 control-section">
+                        <div class="row" style="margin-top:1%;">
+                            <div class="col-3">
+                                <SfDropDownList TValue="int?" TItem="CustomerUserGroupModel" Placeholder="Select a group" DataSource="@customerUserGroupData" @bind-Value="@customerUserGroupId">
+                                    <DropDownListEvents TItem="CustomerUserGroupModel" TValue="int?" ValueChange="@CustomerGroupValueChange"></DropDownListEvents>
+                                    <DropDownListFieldSettings Value="Id" Text="GroupName"></DropDownListFieldSettings>
+                                </SfDropDownList>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-lg-12 control-section" style="margin-top:1%;">
+                        <div class="row">
+                            <SfSpinner @bind-Visible="showSpinner">
+                            </SfSpinner>
+                            <div class="col-sm">
+                                List of Customer Tenant Roles
+                                <SfGrid DataSource="@listCustomerUserGroupRoles" Height="400" Width="100%">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="30" Visible="false"></GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.RoleCode) HeaderText="Role Code" ShowInColumnChooser="false" Width="40"></GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.UserRoleName) HeaderText="Role Name" Width="50"></GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.Description) HeaderText="Description" Width="100"></GridColumn>
+                                        <GridColumn TextAlign="TextAlign.Center" Width="50">
+                                            <Template>
+                                                @{
+                                                    var customerUserGroupRole = (context as CustomerUserGroupRoleModel);
+                                                    <div class="image">
+                                                        <SfButton IconCss="e-icons e-chevron-right e-btn-icon" CssClass="e-btn-grd" @onclick="async (e) => await AppliedRoleInCustomerUserGroup(customerUserGroupRole)"></SfButton>
+                                                    </div>
+                                                }
+                                            </Template>
+                                        </GridColumn>
+                                    </GridColumns>
+                                </SfGrid>
+                            </div>
+                            <div class="col-sm">
+                                List of Applied Customer Group Roles
+                                <SfGrid DataSource="@listAppliedCustomerUserGroupRoles" Height="400" Width="100%">
+                                    <GridColumns>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.Id) TextAlign="TextAlign.Center" HeaderText="Id" Width="20" Visible="false"></GridColumn>
+                                        <GridColumn TextAlign="TextAlign.Center" Width="50">
+                                            <Template>
+                                                @{
+                                                    var customerUserGroupRole = (context as CustomerUserGroupRoleModel);
+                                                    <div class="image">
+                                                        <SfButton IconCss="e-icons e-chevron-left e-btn-icon" CssClass="e-btn-grd" @onclick="async (e) => await DeleteRoleInCustomerUserGroup(customerUserGroupRole)"></SfButton>
+                                                    </div>
+                                                }
+                                            </Template>
+                                        </GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.RoleCode) HeaderText="Role Code" ShowInColumnChooser="false" Width="30"></GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.UserRoleName) HeaderText="Role Name" Width="50"></GridColumn>
+                                        <GridColumn Field=@nameof(CustomerUserGroupRoleModel.Description) HeaderText="Description" Width="100"></GridColumn>
+                                    </GridColumns>
+                                </SfGrid>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </Content>
+    </DialogTemplates>
+</SfDialog>
+
+
+@code {
+
+    [Parameter]
+    public int customerTenantId { get; set; }
+
+    [Parameter]
+    public bool refreshParent { get; set; } = false;
+
+    [Parameter]
+    public EventCallback<bool> RefreshPageEventCallBack { get; set; }
+
+    private int? customerUserGroupId { get; set; }
+
+    private bool showSpinner { get; set; } = false;
+
+    public bool IsVisible { get; set; } = false;
+
+    private List<CustomerUserGroupRoleModel> listCustomerUserGroupRoles { get; set; } = new List<CustomerUserGroupRoleModel>();
+    private List<CustomerUserGroupRoleModel> listAppliedCustomerUserGroupRoles { get; set; } = new List<CustomerUserGroupRoleModel>();
+    private List<CustomerTenantModel> customerTenantData = new List<CustomerTenantModel>();
+    private List<CustomerUserGroupModel> customerUserGroupData = new List<CustomerUserGroupModel>();
+
+
+    public async Task OpenDialog(int customerTenantId)
+    {
+        this.IsVisible = true;
+        this.refreshParent = false;
+        this.customerTenantId = customerTenantId;
+        await this.OnInitializedAsync();
+        this.StateHasChanged();
+    }
+
+    public void CloseDialog()
+    {
+        this.IsVisible = false;
+        this.StateHasChanged();
+    }
+
+    private void OnSubmitHandler()
+    {
+        RefreshPageEventCallBack.InvokeAsync(this.refreshParent);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        customerTenantData = await _userSecurityService.GetAllCustomerTenantsByUserName(user.Identity.Name);
+        listCustomerUserGroupRoles = new List<CustomerUserGroupRoleModel>();
+        listAppliedCustomerUserGroupRoles  = new List<CustomerUserGroupRoleModel>();
+        customerUserGroupData = _userSecurityService.GetCustomerGroupTenants(customerTenantId).Result;
+
+    }
+
+    private void CustomerGroupValueChange(ChangeEventArgs<int?, CustomerUserGroupModel> args)
+    {
+        showSpinner = true;
+        listCustomerUserGroupRoles = new List<CustomerUserGroupRoleModel>();
+        listAppliedCustomerUserGroupRoles  = new List<CustomerUserGroupRoleModel>();
+        if(args.ItemData != null)
+        {
+            listCustomerUserGroupRoles = _userSecurityService.GetUseRolesByCustomerTenantId(customerTenantId, args.ItemData.Id).Result;
+            listAppliedCustomerUserGroupRoles = _userSecurityService.GetAppliedUserRolesByCustomerCustomerGroupId(args.ItemData.Id).Result;
+        }
+        showSpinner = false;
+    }
+
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task AppliedRoleInCustomerUserGroup(CustomerUserGroupRoleModel customerUserGroupRoleModel)
+    {
+        showSpinner = true;
+        if(customerUserGroupRoleModel != null)
+        {
+            await  _userSecurityService.AppliedRoleInCustomerUserGroup(customerUserGroupId, customerUserGroupRoleModel.CustomerUserRoleId);
+            listCustomerUserGroupRoles = listCustomerUserGroupRoles.Where(x => x.CustomerUserRoleId != customerUserGroupRoleModel.CustomerUserRoleId).ToList();
+            listAppliedCustomerUserGroupRoles = await _userSecurityService.GetAppliedUserRolesByCustomerCustomerGroupId(customerUserGroupId ?? 0);
+        }
+        showSpinner = false;
+    }
+
+    private async Task DeleteRoleInCustomerUserGroup(CustomerUserGroupRoleModel customerUserGroupRoleModel)
+    {
+        showSpinner = true;
+        if(customerUserGroupRoleModel != null)
+        {
+            await  _userSecurityService.DeleteRoleInCustomerUserGroup(customerUserGroupRoleModel.Id);
+            listAppliedCustomerUserGroupRoles = listAppliedCustomerUserGroupRoles.Where(x => x.Id != customerUserGroupRoleModel.Id).ToList();
+            listCustomerUserGroupRoles = _userSecurityService.GetUseRolesByCustomerTenantId(customerTenantId, customerUserGroupId ?? 0).Result;
+        }
+        showSpinner = false;
+    }
+    
+
+}

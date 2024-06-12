@@ -1,0 +1,79 @@
+﻿@using BlazorDataAnalytics.Models
+@using BlazorDataAnalytics.Services
+@using BlazorDataAnalytics.Enums
+@using BlazorDataAnalytics.Services.ReportBugService
+@using BlazorDataAnalytics.Services.UserThemeSettingService
+@using Syncfusion.Blazor.Data
+@using Syncfusion.Blazor
+@using Syncfusion.Blazor.Inputs
+@using System.Threading
+@using Syncfusion.Blazor.DropDowns; 
+@using Syncfusion.Blazor.Buttons; 
+@using Microsoft.AspNetCore.WebUtilities 
+@using Syncfusion.Blazor.Notifications
+@using Blazored.Toast
+@using Blazored.Toast.Services
+@inject IToastService toastService
+
+@inject IUserThemeSettingService _userThemeSettingService
+@inject NavigationManager uriHelper
+@inherits LayoutComponentBase 
+@inject NavigationManager UrlHelper; 
+
+
+
+@code {
+    [CascadingParameter]
+    private BlazoredModalInstance _modalInstance { get; set; }
+
+    [Parameter]
+    public string alert { get; set; }
+
+    [Parameter]
+    public string message { get; set; }
+    [Parameter]
+    public string title { get; set; }
+
+    public string CssClass = "alert-success";
+
+    protected override async Task OnInitializedAsync()
+    {
+        switch (alert)
+        {
+
+            case AlertStatus.Danger:
+                {
+                    CssClass = "ERROR";
+                      toastService.ShowError(message,CssClass);
+                    break;
+
+                }
+            case AlertStatus.Warning:
+                {
+                    CssClass = "WARNING";
+                       toastService.ShowWarning(message,CssClass);
+                    break;
+
+                }
+            case AlertStatus.Info:
+                {
+                    CssClass = "INFO";
+                       toastService.ShowInfo(message,CssClass);
+                    break;
+
+                }
+            default:
+                CssClass = "SUCCESS";
+                   toastService.ShowSuccess(message,CssClass);
+                break;
+        }
+      
+
+    }
+    private async Task Close()
+    {
+        await _modalInstance.CloseAsync();
+    }
+    
+
+}
