@@ -1,0 +1,16 @@
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\bin\Debug\net6.0\Blazorade.Msal.staticwebassets.runtime.json
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\bin\Debug\net6.0\Blazorade.Msal.deps.json
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\bin\Debug\net6.0\Blazorade.Msal.dll
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\bin\Debug\net6.0\Blazorade.Msal.pdb
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.csproj.AssemblyReference.cache
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.AssemblyInfoInputs.cache
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.AssemblyInfo.cs
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.csproj.CoreCompileInputs.cache
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\staticwebassets.build.json
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\staticwebassets.development.json
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\scopedcss\bundle\Blazorade.Msal.styles.css
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.dll
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\refint\Blazorade.Msal.dll
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\Blazorade.Msal.pdb
+C:\Users\Rebo\source\repos\DAaaS\Blazorade.Msal\obj\Debug\net6.0\ref\Blazorade.Msal.dll
