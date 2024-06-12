@@ -1,0 +1,101 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Tabular Editor\**" />
+    <Content Remove="Tabular Editor\**" />
+    <EmbeddedResource Remove="Tabular Editor\**" />
+    <None Remove="Tabular Editor\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Remove="Dialogs\MessageBox.razor" />
+    <Content Remove="Pages\ServicePrincipalProfiling.razor" />
+    <Content Remove="wwwroot\arrow-up.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="PowerBITemplate.pbix" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="TemplatePowerBI\PowerBITemplate.pbix">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Azure.Analytics.Synapse.Artifacts" Version="1.0.0-preview.4" />
+    <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.3.0" />
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.12.0" />
+    <PackageReference Include="Blazor.Bootstrap" Version="0.4.2" />
+    <PackageReference Include="Blazored.LocalStorage" Version="4.2.0" />
+    <PackageReference Include="Blazored.Modal" Version="7.0.0-preiew.1" />
+    <PackageReference Include="Blazored.SessionStorage" Version="2.2.0" />
+    <PackageReference Include="Blazored.Toast" Version="3.2.2" />
+    <PackageReference Include="Dax.Formatter" Version="1.1.1" />
+    <PackageReference Include="Microsoft.AnalysisServices.AdomdClient.NetCore.retail.amd64" Version="19.12.3-Preview" />
+    <PackageReference Include="Microsoft.AnalysisServices.NetCore.retail.amd64" Version="19.12.3-Preview" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.AzureAD.UI" Version="6.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="6.0.4" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="7.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Azure.KeyVault" Version="3.0.5" />
+    <PackageReference Include="Microsoft.Azure.Management.DataFactory" Version="6.3.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.18.3" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="6.0.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Azure" Version="1.1.1" />
+    <PackageReference Include="Microsoft.Extensions.Http" Version="5.0.0" />
+    <PackageReference Include="Microsoft.Identity.Client" Version="4.45.0" />
+    <PackageReference Include="Microsoft.Identity.Web" Version="1.22.1" />
+    <PackageReference Include="Microsoft.Identity.Web.MicrosoftGraph" Version="1.22.1" />
+    <PackageReference Include="Microsoft.Identity.Web.UI" Version="1.22.1" />
+    <PackageReference Include="Microsoft.IdentityModel.Clients.ActiveDirectory" Version="5.2.9" />
+    <PackageReference Include="Microsoft.PowerBI.Api" Version="4.5.0" />
+    <PackageReference Include="Microsoft.PowerQuery.SdkTools" Version="2.111.3">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="MimeTypeMapOfficial" Version="1.0.17" />
+    <PackageReference Include="Parquet.Net" Version="3.9.1" />
+    <PackageReference Include="Syncfusion.Blazor" Version="20.1.0.52" />
+    <PackageReference Include="MimeTypesMap" Version="1.0.8" />
+    <PackageReference Include="Syncfusion.Blazor" Version="20.1.0.55" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.3.3" />
+    <PackageReference Include="Xero.NetStandard.OAuth2" Version="3.25.0" />
+    <PackageReference Include="Xero.NetStandard.OAuth2Client" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Blazorade.Msal\Blazorade.Msal.csproj" />
+    <ProjectReference Include="..\Persistence\Persistence.Config\Persistence.Config.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Properties\Resources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Update="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+	
+	<PropertyGroup>
+		<UseRazorSourceGenerator>false</UseRazorSourceGenerator>
+	</PropertyGroup>
+</Project>
